@@ -32,7 +32,7 @@ const Index = () => {
               </div>
             </div>
             <div className="order-1 md:order-2">
-              <img src="https://images.unsplash.com/photo-1618160702438-9b02ab6515c9" alt="Xstore products" className="w-full h-auto rounded-xl shadow-lg" />
+              <img alt="Xstore products" className="w-full h-auto rounded-xl shadow-lg" src="/lovable-uploads/119d1676-880a-4a1a-bbf6-4b15e4fa5260.png" />
             </div>
           </div>
         </div>
