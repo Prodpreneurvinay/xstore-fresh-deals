@@ -14,7 +14,7 @@ const Index = () => {
   } = useCity();
   return <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-xstore-green-light to-xstore-green py-16 text-white">
+      <section className="bg-gradient-to-br from-xstore-green-light to-xstore-green py-16 text-white bg-amber-600">
         <div className="container-custom">
           <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-12">
             <div className="order-2 md:order-1">
