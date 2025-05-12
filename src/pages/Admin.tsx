@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
@@ -10,11 +9,105 @@ import {
   Settings, 
   Search,
   Plus,
-  Filter
+  Filter,
+  Edit,
+  Trash
 } from 'lucide-react';
+import { Product } from '@/components/ProductCard';
+import ProductForm, { ProductFormData } from '@/components/ProductForm';
+import { useToast } from '@/components/ui/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogHeader,
+} from '@/components/ui/dialog';
+
+// Mock product data - typically this would come from your backend
+const mockProducts: Product[] = [
+  {
+    id: '1',
+    name: 'Nestle Maggi Noodles (Pack of 12)',
+    category: 'Food Items',
+    mrp: 160,
+    sellingPrice: 120,
+    imageUrl: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9',
+    expiryDate: '10 Jun 2025',
+    quantity: '12 x 70g',
+    isHotDeal: true
+  },
+  {
+    id: '2',
+    name: 'Britannia Good Day Biscuits',
+    category: 'Food Items',
+    mrp: 100,
+    sellingPrice: 75,
+    imageUrl: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9',
+    expiryDate: '15 May 2025',
+    quantity: '1 kg',
+  },
+  // ... keep existing code (remaining mock products)
+];
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showProductForm, setShowProductForm] = useState(false);
+  const [currentProduct, setCurrentProduct] = useState<Product | undefined>(undefined);
+  const { toast } = useToast();
+  
+  const filteredProducts = products.filter(product => 
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  const handleAddProduct = () => {
+    setCurrentProduct(undefined);
+    setShowProductForm(true);
+  };
+  
+  const handleEditProduct = (product: Product) => {
+    setCurrentProduct(product);
+    setShowProductForm(true);
+  };
+  
+  const handleDeleteProduct = (productId: string) => {
+    const newProducts = products.filter(p => p.id !== productId);
+    setProducts(newProducts);
+    toast({
+      title: "Product Deleted",
+      description: "The product has been successfully deleted.",
+    });
+  };
+  
+  const handleProductSubmit = (data: ProductFormData) => {
+    if (currentProduct) {
+      // Update existing product
+      const updatedProducts = products.map(p => 
+        p.id === currentProduct.id 
+          ? { ...data, id: currentProduct.id } 
+          : p
+      );
+      setProducts(updatedProducts);
+      toast({
+        title: "Product Updated",
+        description: "The product has been successfully updated.",
+      });
+    } else {
+      // Add new product
+      const newProduct = {
+        ...data,
+        id: `product-${Date.now()}`, // Simple way to generate an id
+      };
+      setProducts([...products, newProduct]);
+      toast({
+        title: "Product Added",
+        description: "The product has been successfully added.",
+      });
+    }
+    setShowProductForm(false);
+  };
   
   return (
     <div className="min-h-screen bg-gray-100 flex">
@@ -181,7 +274,7 @@ const AdminDashboard = () => {
             <TabsContent value="products">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold">Products</h2>
-                <Button className="bg-xstore-green">
+                <Button className="bg-xstore-green" onClick={handleAddProduct}>
                   <Plus size={16} className="mr-2" />
                   Add Product
                 </Button>
@@ -191,7 +284,12 @@ const AdminDashboard = () => {
                 <div className="p-4 border-b flex flex-col sm:flex-row gap-4">
                   <div className="relative flex-grow">
                     <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <Input placeholder="Search products..." className="pl-10" />
+                    <Input 
+                      placeholder="Search products..." 
+                      className="pl-10"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                   </div>
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" className="flex items-center">
@@ -209,35 +307,57 @@ const AdminDashboard = () => {
                         <th className="py-3 px-4 text-left">Category</th>
                         <th className="py-3 px-4 text-left">Price</th>
                         <th className="py-3 px-4 text-left">Expiry</th>
-                        <th className="py-3 px-4 text-left">City</th>
-                        <th className="py-3 px-4 text-left">Stock</th>
+                        <th className="py-3 px-4 text-left">Hot Deal</th>
                         <th className="py-3 px-4 text-left">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(item => (
-                        <tr key={item} className="hover:bg-gray-50">
-                          <td className="py-3 px-4">Product Name #{item}</td>
-                          <td className="py-3 px-4">Food Items</td>
+                      {filteredProducts.map((product) => (
+                        <tr key={product.id} className="hover:bg-gray-50">
                           <td className="py-3 px-4">
-                            <span className="font-medium">₹{120 + (item * 10)}</span>
-                            <span className="text-gray-500 line-through text-xs ml-1">₹{150 + (item * 10)}</span>
+                            <div className="flex items-center">
+                              <div className="h-10 w-10 flex-shrink-0 mr-3">
+                                <img 
+                                  src={product.imageUrl || "https://via.placeholder.com/40"} 
+                                  alt={product.name} 
+                                  className="h-10 w-10 rounded-full object-cover"
+                                />
+                              </div>
+                              <span>{product.name}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">{product.category}</td>
+                          <td className="py-3 px-4">
+                            <span className="font-medium">₹{product.sellingPrice.toFixed(2)}</span>
+                            <span className="text-gray-500 line-through text-xs ml-1">₹{product.mrp.toFixed(2)}</span>
                           </td>
                           <td className="py-3 px-4">
-                            <span className={`px-2 py-1 rounded-full text-xs ${item % 3 === 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-                              {item % 3 === 0 ? '7 days left' : '3 months left'}
-                            </span>
+                            {product.expiryDate}
                           </td>
-                          <td className="py-3 px-4">Mumbai</td>
                           <td className="py-3 px-4">
-                            <span className={`${item % 4 === 0 ? 'text-yellow-500' : 'text-green-600'}`}>
-                              {item % 4 === 0 ? 'Low' : 'In Stock'}
-                            </span>
+                            {product.isHotDeal ? (
+                              <span className="bg-xstore-orange text-white text-xs px-2 py-1 rounded-full">Hot Deal</span>
+                            ) : (
+                              <span className="text-gray-500">-</span>
+                            )}
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center space-x-2">
-                              <Button variant="ghost" size="sm">Edit</Button>
-                              <Button variant="ghost" size="sm" className="text-red-500">Delete</Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => handleEditProduct(product)}
+                              >
+                                <Edit size={16} />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-red-500"
+                                onClick={() => handleDeleteProduct(product.id)}
+                              >
+                                <Trash size={16} />
+                              </Button>
                             </div>
                           </td>
                         </tr>
@@ -246,15 +366,21 @@ const AdminDashboard = () => {
                   </table>
                 </div>
                 
-                <div className="p-4 border-t flex justify-between items-center">
-                  <span className="text-sm text-gray-500">
-                    Showing 1-10 of 182 products
-                  </span>
-                  <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm" disabled>Previous</Button>
-                    <Button variant="outline" size="sm">Next</Button>
+                {filteredProducts.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <p className="text-gray-500">No products found. Try adjusting your search or add a new product.</p>
                   </div>
-                </div>
+                ) : (
+                  <div className="p-4 border-t flex justify-between items-center">
+                    <span className="text-sm text-gray-500">
+                      Showing {filteredProducts.length} of {products.length} products
+                    </span>
+                    <div className="flex items-center space-x-2">
+                      <Button variant="outline" size="sm" disabled={filteredProducts.length === 0}>Previous</Button>
+                      <Button variant="outline" size="sm">Next</Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </TabsContent>
             
@@ -412,6 +538,20 @@ const AdminDashboard = () => {
           </Tabs>
         </main>
       </div>
+      
+      {/* Product Form Dialog */}
+      <Dialog open={showProductForm} onOpenChange={setShowProductForm}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{currentProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
+          </DialogHeader>
+          <ProductForm 
+            product={currentProduct}
+            onSubmit={handleProductSubmit}
+            onCancel={() => setShowProductForm(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
