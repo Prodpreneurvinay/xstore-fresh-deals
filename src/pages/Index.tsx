@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -6,48 +5,34 @@ import { Link } from 'react-router-dom';
 import { ShoppingBag, Salad, ArrowRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useCity } from '@/context/CityContext';
-
 const Index = () => {
-  const { cart } = useCart();
-  const { currentCity } = useCity();
-  
-  return (
-    <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
+  const {
+    cart
+  } = useCart();
+  const {
+    currentCity
+  } = useCity();
+  return <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-xstore-green-light to-xstore-green py-16 text-white">
         <div className="container-custom">
           <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-12">
             <div className="order-2 md:order-1">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                Efficient Supply Chain Solutions for Your Business
-              </h1>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">Save Big on Near-Expiry Stock — Up to 95% OFF for Local Shopkeepers!</h1>
               <p className="text-lg md:text-xl mb-8">
                 From discounted near-expiry products to fresh daily produce, we've got your business covered.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button 
-                  asChild
-                  size="lg" 
-                  className="bg-white text-xstore-green hover:bg-gray-100 border-2 border-white"
-                >
+                <Button asChild size="lg" className="bg-white text-xstore-green hover:bg-gray-100 border-2 border-white">
                   <Link to="/select-city">Get Started</Link>
                 </Button>
-                <Button 
-                  asChild
-                  variant="outline" 
-                  size="lg"
-                  className="border-2 border-white text-white hover:bg-white/10"
-                >
-                  <Link to="/about">Learn More</Link>
+                <Button asChild variant="outline" size="lg" className="border-2 border-white text-white hover:bg-white/10">
+                  
                 </Button>
               </div>
             </div>
             <div className="order-1 md:order-2">
-              <img 
-                src="https://images.unsplash.com/photo-1618160702438-9b02ab6515c9" 
-                alt="Xstore products" 
-                className="w-full h-auto rounded-xl shadow-lg"
-              />
+              <img src="https://images.unsplash.com/photo-1618160702438-9b02ab6515c9" alt="Xstore products" className="w-full h-auto rounded-xl shadow-lg" />
             </div>
           </div>
         </div>
@@ -62,11 +47,7 @@ const Index = () => {
             {/* Xstore Retail */}
             <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 transition-transform hover:-translate-y-1 hover:shadow-lg">
               <div className="aspect-video overflow-hidden">
-                <img 
-                  src="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b" 
-                  alt="Xstore Retail" 
-                  className="w-full h-full object-cover"
-                />
+                <img src="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b" alt="Xstore Retail" className="w-full h-full object-cover" />
               </div>
               <div className="p-6">
                 <div className="flex items-center mb-4">
@@ -91,11 +72,7 @@ const Index = () => {
             {/* Xstore Fresh */}
             <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 transition-transform hover:-translate-y-1 hover:shadow-lg">
               <div className="aspect-video overflow-hidden">
-                <img 
-                  src="https://images.unsplash.com/photo-1721322800607-8c38375eef04" 
-                  alt="Xstore Fresh" 
-                  className="w-full h-full object-cover"
-                />
+                <img src="https://images.unsplash.com/photo-1721322800607-8c38375eef04" alt="Xstore Fresh" className="w-full h-full object-cover" />
               </div>
               <div className="p-6">
                 <div className="flex items-center mb-4">
@@ -172,17 +149,11 @@ const Index = () => {
           <p className="text-xl mb-8 max-w-2xl mx-auto">
             Join hundreds of businesses already using Xstore to optimize their supply chain
           </p>
-          <Button 
-            asChild
-            size="lg" 
-            className="bg-white text-xstore-orange hover:bg-gray-100"
-          >
+          <Button asChild size="lg" className="bg-white text-xstore-orange hover:bg-gray-100">
             <Link to="/select-city">Select Your City</Link>
           </Button>
         </div>
       </section>
-    </Layout>
-  );
+    </Layout>;
 };
-
 export default Index;
