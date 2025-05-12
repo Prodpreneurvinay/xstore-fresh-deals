@@ -47,7 +47,7 @@ const Index = () => {
             {/* Xstore Retail */}
             <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 transition-transform hover:-translate-y-1 hover:shadow-lg">
               <div className="aspect-video overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b" alt="Xstore Retail" className="w-full h-full object-cover" />
+                <img alt="Xstore Retail" className="w-full h-full object-cover" src="/lovable-uploads/d8cd9b69-9c4a-469c-989a-a1a74f341829.jpg" />
               </div>
               <div className="p-6">
                 <div className="flex items-center mb-4">
