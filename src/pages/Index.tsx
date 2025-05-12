@@ -1,13 +1,187 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React from 'react';
+import Layout from '@/components/Layout';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { ShoppingBag, Salad, ArrowRight } from 'lucide-react';
+import { useCart } from '@/context/CartContext';
+import { useCity } from '@/context/CityContext';
 
 const Index = () => {
+  const { cart } = useCart();
+  const { currentCity } = useCity();
+  
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-xstore-green-light to-xstore-green py-16 text-white">
+        <div className="container-custom">
+          <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-12">
+            <div className="order-2 md:order-1">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                Efficient Supply Chain Solutions for Your Business
+              </h1>
+              <p className="text-lg md:text-xl mb-8">
+                From discounted near-expiry products to fresh daily produce, we've got your business covered.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button 
+                  asChild
+                  size="lg" 
+                  className="bg-white text-xstore-green hover:bg-gray-100 border-2 border-white"
+                >
+                  <Link to="/select-city">Get Started</Link>
+                </Button>
+                <Button 
+                  asChild
+                  variant="outline" 
+                  size="lg"
+                  className="border-2 border-white text-white hover:bg-white/10"
+                >
+                  <Link to="/about">Learn More</Link>
+                </Button>
+              </div>
+            </div>
+            <div className="order-1 md:order-2">
+              <img 
+                src="https://images.unsplash.com/photo-1618160702438-9b02ab6515c9" 
+                alt="Xstore products" 
+                className="w-full h-auto rounded-xl shadow-lg"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Services Section */}
+      <section className="py-16">
+        <div className="container-custom">
+          <h2 className="text-3xl font-bold text-center mb-12">Our Services</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Xstore Retail */}
+            <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 transition-transform hover:-translate-y-1 hover:shadow-lg">
+              <div className="aspect-video overflow-hidden">
+                <img 
+                  src="https://images.unsplash.com/photo-1488590528505-98d2b5aba04b" 
+                  alt="Xstore Retail" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="p-6">
+                <div className="flex items-center mb-4">
+                  <ShoppingBag className="text-xstore-orange mr-2" size={24} />
+                  <h3 className="text-2xl font-semibold">Xstore Retail</h3>
+                </div>
+                <p className="text-gray-600 mb-6">
+                  Get near-expiry FMCG products from large chains at discounted rates. 
+                  Perfect for retail shopkeepers looking to maximize profits.
+                </p>
+                <div className="flex items-center">
+                  <Button asChild className="bg-xstore-orange hover:bg-xstore-orange-dark">
+                    <Link to="/xstore-retail">
+                      Explore Products
+                      <ArrowRight size={16} className="ml-2" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+            
+            {/* Xstore Fresh */}
+            <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 transition-transform hover:-translate-y-1 hover:shadow-lg">
+              <div className="aspect-video overflow-hidden">
+                <img 
+                  src="https://images.unsplash.com/photo-1721322800607-8c38375eef04" 
+                  alt="Xstore Fresh" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="p-6">
+                <div className="flex items-center mb-4">
+                  <Salad className="text-xstore-green mr-2" size={24} />
+                  <h3 className="text-2xl font-semibold">Xstore Fresh</h3>
+                </div>
+                <p className="text-gray-600 mb-6">
+                  Daily delivery of fresh fruits, vegetables, and frozen goods sourced from local mandis. 
+                  Ideal for restaurants and hotels.
+                </p>
+                <div className="flex items-center">
+                  <Button asChild>
+                    <Link to="/xstore-fresh">
+                      Fresh Produce
+                      <ArrowRight size={16} className="ml-2" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* How It Works */}
+      <section className="py-16 bg-gray-50">
+        <div className="container-custom">
+          <h2 className="text-3xl font-bold text-center mb-4">How It Works</h2>
+          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+            We've made the ordering process simple and frictionless for your business
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Step 1 */}
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="w-12 h-12 bg-xstore-green rounded-full text-white flex items-center justify-center mb-4">
+                <span className="text-xl font-bold">1</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Select Your City</h3>
+              <p className="text-gray-600">
+                Choose your city to see available products in your area. We're currently available in select major cities.
+              </p>
+            </div>
+            
+            {/* Step 2 */}
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="w-12 h-12 bg-xstore-green rounded-full text-white flex items-center justify-center mb-4">
+                <span className="text-xl font-bold">2</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Add Products to Cart</h3>
+              <p className="text-gray-600">
+                Browse our extensive catalog and add products to your cart. Minimum order value is ₹3,000.
+              </p>
+            </div>
+            
+            {/* Step 3 */}
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="w-12 h-12 bg-xstore-green rounded-full text-white flex items-center justify-center mb-4">
+                <span className="text-xl font-bold">3</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Complete Your Order</h3>
+              <p className="text-gray-600">
+                Provide your shop details and delivery address. No payment needed - we'll deliver and collect on delivery.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* CTA Section */}
+      <section className="py-16 bg-xstore-orange text-white">
+        <div className="container-custom text-center">
+          <h2 className="text-3xl font-bold mb-6">Ready to Get Started?</h2>
+          <p className="text-xl mb-8 max-w-2xl mx-auto">
+            Join hundreds of businesses already using Xstore to optimize their supply chain
+          </p>
+          <Button 
+            asChild
+            size="lg" 
+            className="bg-white text-xstore-orange hover:bg-gray-100"
+          >
+            <Link to="/select-city">Select Your City</Link>
+          </Button>
+        </div>
+      </section>
+    </Layout>
   );
 };
 
