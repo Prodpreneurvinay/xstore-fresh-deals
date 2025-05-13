@@ -25,9 +25,23 @@ const XstoreFresh = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>(['All Products']);
   
+  // Check if city is selected, redirect if not
+  useEffect(() => {
+    if (!currentCity) {
+      toast({
+        title: "City Required",
+        description: "Please select your city to see available fresh products",
+        variant: "default"
+      });
+      navigate('/select-city');
+    }
+  }, [currentCity, navigate, toast]);
+  
   // Fetch products when component mounts
   useEffect(() => {
     const fetchProducts = async () => {
+      if (!currentCity) return;
+      
       setLoading(true);
       try {
         const fetchedProducts = await getProducts();
@@ -55,7 +69,7 @@ const XstoreFresh = () => {
     };
     
     fetchProducts();
-  }, [toast]);
+  }, [currentCity, toast]);
   
   // Filter products based on search, category, and city
   const filteredProducts = products
@@ -68,9 +82,8 @@ const XstoreFresh = () => {
     navigate('/cart');
   };
   
-  // Redirect to city selection if no city is selected
+  // If no city is selected, we return null since the useEffect will handle redirection
   if (!currentCity) {
-    navigate('/select-city');
     return null;
   }
   

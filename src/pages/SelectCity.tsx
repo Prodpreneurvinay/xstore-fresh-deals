@@ -5,6 +5,7 @@ import Layout from "@/components/Layout";
 import { useCity } from '@/context/CityContext';
 import { MapPin, ChevronRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/use-toast';
 
 const SelectCity = () => {
   const { setCity, availableCities, isLoading } = useCity();
@@ -12,7 +13,11 @@ const SelectCity = () => {
 
   const handleCitySelect = (city: string) => {
     setCity(city);
-    navigate('/');
+    toast({
+      title: "City Selected",
+      description: `You've selected ${city}. Showing products available in your area.`
+    });
+    navigate('/products');
   };
 
   return (

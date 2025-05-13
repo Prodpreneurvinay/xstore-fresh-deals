@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -5,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { ShoppingBag, Salad, ArrowRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useCity } from '@/context/CityContext';
+
 const Index = () => {
   const {
     cart
@@ -12,6 +14,7 @@ const Index = () => {
   const {
     currentCity
   } = useCity();
+  
   return <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-xstore-green-light to-xstore-green py-16 text-white bg-orange-500">
@@ -27,7 +30,7 @@ const Index = () => {
                   <Link to="/select-city">Get Started</Link>
                 </Button>
                 <Button asChild variant="outline" size="lg" className="border-2 border-white text-white hover:bg-white/10">
-                  
+                  <Link to="/products">Browse Products</Link>
                 </Button>
               </div>
             </div>
@@ -60,7 +63,7 @@ const Index = () => {
                 </p>
                 <div className="flex items-center">
                   <Button asChild className="bg-xstore-orange hover:bg-xstore-orange-dark">
-                    <Link to="/xstore-retail">
+                    <Link to="/select-city">
                       Explore Products
                       <ArrowRight size={16} className="ml-2" />
                     </Link>
@@ -85,7 +88,7 @@ const Index = () => {
                 </p>
                 <div className="flex items-center">
                   <Button asChild>
-                    <Link to="/xstore-fresh">
+                    <Link to="/select-city">
                       Fresh Produce
                       <ArrowRight size={16} className="ml-2" />
                     </Link>
@@ -156,4 +159,5 @@ const Index = () => {
       </section>
     </Layout>;
 };
+
 export default Index;
