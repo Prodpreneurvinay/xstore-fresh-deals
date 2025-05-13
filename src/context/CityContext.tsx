@@ -5,6 +5,7 @@ import { getCities } from '@/services/cityService';
 
 type CityContextType = {
   city: string | null;
+  currentCity: string | null; // Added for backward compatibility
   setCity: (city: string) => void;
   availableCities: string[];
   isLoading: boolean;
@@ -12,6 +13,7 @@ type CityContextType = {
 
 const CityContext = createContext<CityContextType>({
   city: null,
+  currentCity: null, // Added for backward compatibility
   setCity: () => {},
   availableCities: [],
   isLoading: false,
@@ -69,7 +71,13 @@ export const CityProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <CityContext.Provider
-      value={{ city, setCity: updateCity, availableCities, isLoading }}
+      value={{ 
+        city, 
+        currentCity: city, // Added for backward compatibility
+        setCity: updateCity, 
+        availableCities, 
+        isLoading 
+      }}
     >
       {children}
     </CityContext.Provider>

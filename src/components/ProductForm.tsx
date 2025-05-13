@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -20,8 +20,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
-import { Upload, X, Image } from 'lucide-react';
+import { Upload, X, Image, Store, Leaf } from 'lucide-react';
 import { Product } from '@/components/ProductCard';
+import { useToast } from '@/components/ui/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type ProductFormProps = {
   product?: Product;
@@ -33,14 +35,19 @@ type ProductFormProps = {
 export type ProductFormData = Omit<Product, 'id'> & {
   cities: string[];
   imageFile?: File;
+  storeType: 'xstore' | 'xstore-fresh';
 };
 
-const CATEGORIES = [
+// Category definitions
+const XSTORE_CATEGORIES = [
   'Food Items',
   'Beverages',
   'Personal Care',
   'Home Care',
   'Health & Hygiene',
+];
+
+const XSTORE_FRESH_CATEGORIES = [
   'Vegetables',
   'Fruits',
   'Dairy',
@@ -48,8 +55,26 @@ const CATEGORIES = [
   'Frozen'
 ];
 
+// Map categories to store type
+const CATEGORY_TO_STORE_TYPE: Record<string, 'xstore' | 'xstore-fresh'> = {
+  'Food Items': 'xstore',
+  'Beverages': 'xstore',
+  'Personal Care': 'xstore',
+  'Home Care': 'xstore',
+  'Health & Hygiene': 'xstore',
+  'Vegetables': 'xstore-fresh',
+  'Fruits': 'xstore-fresh',
+  'Dairy': 'xstore-fresh',
+  'Meat': 'xstore-fresh',
+  'Frozen': 'xstore-fresh',
+};
+
 const ProductForm = ({ product, onSubmit, onCancel, availableCities = [] }: ProductFormProps) => {
   const [previewImage, setPreviewImage] = useState<string | undefined>(product?.imageUrl);
+  const [selectedStoreType, setSelectedStoreType] = useState<'xstore' | 'xstore-fresh'>(
+    product ? CATEGORY_TO_STORE_TYPE[product.category] || 'xstore' : 'xstore'
+  );
+  const { toast } = useToast();
   
   const form = useForm<ProductFormData>({
     defaultValues: {
@@ -61,9 +86,31 @@ const ProductForm = ({ product, onSubmit, onCancel, availableCities = [] }: Prod
       expiryDate: product?.expiryDate || '',
       quantity: product?.quantity || '',
       isHotDeal: product?.isHotDeal || false,
-      cities: product?.cities || []
+      cities: product?.cities || [],
+      storeType: product ? CATEGORY_TO_STORE_TYPE[product.category] || 'xstore' : 'xstore'
     }
   });
+  
+  // Update category when store type changes
+  useEffect(() => {
+    if (selectedStoreType === 'xstore') {
+      form.setValue('category', XSTORE_CATEGORIES[0]);
+    } else {
+      form.setValue('category', XSTORE_FRESH_CATEGORIES[0]);
+    }
+  }, [selectedStoreType, form]);
+
+  // Update store type when category changes
+  useEffect(() => {
+    const category = form.watch('category');
+    if (category) {
+      const storeType = CATEGORY_TO_STORE_TYPE[category];
+      if (storeType) {
+        setSelectedStoreType(storeType);
+        form.setValue('storeType', storeType);
+      }
+    }
+  }, [form.watch('category'), form]);
   
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -83,6 +130,16 @@ const ProductForm = ({ product, onSubmit, onCancel, availableCities = [] }: Prod
   };
   
   const handleSubmit = form.handleSubmit((data) => {
+    // Validate that at least one city is selected
+    if (data.cities.length === 0) {
+      toast({
+        title: "City selection required",
+        description: "Please select at least one city where this product will be available",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     onSubmit(data);
   });
   
@@ -95,6 +152,35 @@ const ProductForm = ({ product, onSubmit, onCancel, availableCities = [] }: Prod
   return (
     <Form {...form}>
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Store Type Selection */}
+        <div className="space-y-2">
+          <FormLabel>Store Type</FormLabel>
+          <Tabs 
+            value={selectedStoreType} 
+            onValueChange={(value: 'xstore' | 'xstore-fresh') => {
+              setSelectedStoreType(value);
+              form.setValue('storeType', value);
+            }} 
+            className="w-full"
+          >
+            <TabsList className="grid grid-cols-2 mb-2">
+              <TabsTrigger value="xstore" className="flex items-center">
+                <Store size={16} className="mr-2" />
+                XStore
+              </TabsTrigger>
+              <TabsTrigger value="xstore-fresh" className="flex items-center">
+                <Leaf size={16} className="mr-2" />
+                XStore Fresh
+              </TabsTrigger>
+            </TabsList>
+            <p className="text-sm text-gray-500 mb-2">
+              {selectedStoreType === 'xstore' ? 
+                'XStore - For FMCG items like food, beverages, and personal care products.' : 
+                'XStore Fresh - For fresh items like vegetables, fruits, meat, and dairy products.'}
+            </p>
+          </Tabs>
+        </div>
+
         {/* Product Image */}
         <div className="space-y-2">
           <FormLabel>Product Image</FormLabel>
@@ -176,6 +262,7 @@ const ProductForm = ({ product, onSubmit, onCancel, availableCities = [] }: Prod
                 <Select 
                   onValueChange={field.onChange} 
                   defaultValue={field.value}
+                  value={field.value}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -183,11 +270,19 @@ const ProductForm = ({ product, onSubmit, onCancel, availableCities = [] }: Prod
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {CATEGORIES.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
+                    {selectedStoreType === 'xstore' ? (
+                      XSTORE_CATEGORIES.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      XSTORE_FRESH_CATEGORIES.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -292,31 +387,62 @@ const ProductForm = ({ product, onSubmit, onCancel, availableCities = [] }: Prod
         
         {/* City Availability */}
         <div className="space-y-4">
-          <FormLabel>City Availability</FormLabel>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {availableCities.map((city) => (
-              <div key={city} className="flex items-center space-x-2">
-                <Checkbox 
-                  id={`city-${city}`} 
-                  onCheckedChange={(checked) => {
-                    const currentCities = form.watch('cities');
-                    if (checked) {
-                      form.setValue('cities', [...currentCities, city]);
-                    } else {
-                      form.setValue('cities', currentCities.filter(c => c !== city));
-                    }
-                  }}
-                  checked={form.watch('cities').includes(city)}
-                />
-                <label
-                  htmlFor={`city-${city}`}
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  {city}
-                </label>
-              </div>
-            ))}
+          <div className="flex justify-between items-center">
+            <FormLabel>City Availability</FormLabel>
+            <div className="flex gap-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm"
+                onClick={() => form.setValue('cities', [])}
+              >
+                Clear All
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm"
+                onClick={() => form.setValue('cities', [...availableCities])}
+              >
+                Select All
+              </Button>
+            </div>
           </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-4 border rounded-md">
+            {availableCities.length > 0 ? (
+              availableCities.map((city) => (
+                <div key={city} className="flex items-center space-x-2">
+                  <Checkbox 
+                    id={`city-${city}`} 
+                    onCheckedChange={(checked) => {
+                      const currentCities = form.watch('cities');
+                      if (checked) {
+                        form.setValue('cities', [...currentCities, city]);
+                      } else {
+                        form.setValue('cities', currentCities.filter(c => c !== city));
+                      }
+                    }}
+                    checked={form.watch('cities').includes(city)}
+                  />
+                  <label
+                    htmlFor={`city-${city}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    {city}
+                  </label>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-4 text-center py-4 text-gray-500">
+                No cities available. Please add cities first.
+              </div>
+            )}
+          </div>
+          {form.watch('cities').length > 0 && (
+            <div className="text-sm text-gray-500">
+              Selected {form.watch('cities').length} of {availableCities.length} cities
+            </div>
+          )}
         </div>
         
         {/* Form Actions */}
