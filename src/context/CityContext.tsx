@@ -1,57 +1,77 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useToast } from '@/components/ui/use-toast';
+import { getCities } from '@/services/cityService';
 
 type CityContextType = {
-  currentCity: string | undefined;
+  city: string | null;
   setCity: (city: string) => void;
-  clearCity: () => void;
+  availableCities: string[];
+  isLoading: boolean;
 };
 
-const CityContext = createContext<CityContextType | undefined>(undefined);
+const CityContext = createContext<CityContextType>({
+  city: null,
+  setCity: () => {},
+  availableCities: [],
+  isLoading: false,
+});
 
-export const AVAILABLE_CITIES = [
-  'Mumbai',
-  'Delhi',
-  'Bangalore',
-  'Hyderabad',
-  'Chennai',
-  'Kolkata',
-  'Pune',
-];
+export const useCity = () => useContext(CityContext);
 
-export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentCity, setCurrentCity] = useState<string | undefined>(() => {
-    const savedCity = localStorage.getItem('selectedCity');
-    return savedCity || undefined;
-  });
-  
+export const CityProvider = ({ children }: { children: React.ReactNode }) => {
+  const [city, setCity] = useState<string | null>(localStorage.getItem('selectedCity'));
+  const [availableCities, setAvailableCities] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
   useEffect(() => {
-    if (currentCity) {
-      localStorage.setItem('selectedCity', currentCity);
-    } else {
-      localStorage.removeItem('selectedCity');
-    }
-  }, [currentCity]);
-  
-  const setCity = (city: string) => {
-    setCurrentCity(city);
+    const fetchCities = async () => {
+      setIsLoading(true);
+      try {
+        const citiesData = await getCities();
+        // Filter only active cities and extract their names
+        const cityNames = citiesData
+          .filter(city => city.isActive)
+          .map(city => city.name);
+        
+        setAvailableCities(cityNames);
+        
+        // If the stored city is no longer available, clear it
+        if (city && !cityNames.includes(city)) {
+          localStorage.removeItem('selectedCity');
+          setCity(null);
+          toast({
+            title: "City no longer available",
+            description: "Please select a different city",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch cities:", error);
+        toast({
+          title: "Error loading cities",
+          description: "Could not load available cities. Please try again later.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCities();
+  }, [city, toast]);
+
+  const updateCity = (newCity: string) => {
+    localStorage.setItem('selectedCity', newCity);
+    setCity(newCity);
   };
-  
-  const clearCity = () => {
-    setCurrentCity(undefined);
-  };
-  
+
   return (
-    <CityContext.Provider value={{ currentCity, setCity, clearCity }}>
+    <CityContext.Provider
+      value={{ city, setCity: updateCity, availableCities, isLoading }}
+    >
       {children}
     </CityContext.Provider>
   );
-};
-
-export const useCity = () => {
-  const context = useContext(CityContext);
-  if (context === undefined) {
-    throw new Error('useCity must be used within a CityProvider');
-  }
-  return context;
 };

@@ -12,7 +12,8 @@ import {
   Filter,
   Edit,
   Trash,
-  Loader2
+  Loader2,
+  MapPin
 } from 'lucide-react';
 import { Product } from '@/components/ProductCard';
 import ProductForm, { ProductFormData } from '@/components/ProductForm';
@@ -24,6 +25,7 @@ import {
   DialogHeader,
 } from '@/components/ui/dialog';
 import { getProducts, saveProduct, deleteProduct, getCities } from '@/services/productService';
+import CitiesTab from '@/components/CitiesTab';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -161,6 +163,15 @@ const AdminDashboard = () => {
             </li>
             <li className="mb-1">
               <button 
+                onClick={() => setActiveTab("cities")} 
+                className={`w-full flex items-center space-x-2 px-2 py-2 rounded-md ${activeTab === "cities" ? "bg-xstore-green text-white" : "text-gray-700 hover:bg-gray-100"}`}
+              >
+                <MapPin size={16} />
+                <span>Cities</span>
+              </button>
+            </li>
+            <li className="mb-1">
+              <button 
                 onClick={() => setActiveTab("orders")}  
                 className={`w-full flex items-center space-x-2 px-2 py-2 rounded-md ${activeTab === "orders" ? "bg-xstore-green text-white" : "text-gray-700 hover:bg-gray-100"}`}
               >
@@ -199,12 +210,15 @@ const AdminDashboard = () => {
         
         <main className="p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="md:hidden grid grid-cols-4 gap-2 bg-transparent">
+            <TabsList className="md:hidden grid grid-cols-5 gap-2 bg-transparent">
               <TabsTrigger value="dashboard" className="data-[state=active]:bg-xstore-green data-[state=active]:text-white">
                 <BarChart3 size={16} />
               </TabsTrigger>
               <TabsTrigger value="products" className="data-[state=active]:bg-xstore-green data-[state=active]:text-white">
                 <Package size={16} />
+              </TabsTrigger>
+              <TabsTrigger value="cities" className="data-[state=active]:bg-xstore-green data-[state=active]:text-white">
+                <MapPin size={16} />
               </TabsTrigger>
               <TabsTrigger value="orders" className="data-[state=active]:bg-xstore-green data-[state=active]:text-white">
                 <ShoppingBag size={16} />
@@ -425,6 +439,10 @@ const AdminDashboard = () => {
                   </div>
                 )}
               </div>
+            </TabsContent>
+            
+            <TabsContent value="cities">
+              <CitiesTab />
             </TabsContent>
             
             <TabsContent value="orders">
