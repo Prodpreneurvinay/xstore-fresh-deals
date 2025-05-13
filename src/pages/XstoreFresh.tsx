@@ -1,110 +1,67 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import ProductCard, { Product } from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
 import { useCity } from '@/context/CityContext';
-import { Filter, Search, ShoppingCart, Leaf } from 'lucide-react';
+import { Filter, Search, ShoppingCart, Leaf, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
+import { getProducts } from '@/services/productService';
+import { useToast } from '@/components/ui/use-toast';
 
-// Mock fresh product data
-const mockFreshProducts: Product[] = [
-  {
-    id: 'f1',
-    name: 'Fresh Tomatoes',
-    category: 'Vegetables',
-    mrp: 60,
-    sellingPrice: 45,
-    imageUrl: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9',
-    quantity: '1 kg',
-    isHotDeal: true
-  },
-  {
-    id: 'f2',
-    name: 'Onions',
-    category: 'Vegetables',
-    mrp: 40,
-    sellingPrice: 32,
-    imageUrl: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9',
-    quantity: '1 kg',
-  },
-  {
-    id: 'f3',
-    name: 'Apples',
-    category: 'Fruits',
-    mrp: 180,
-    sellingPrice: 150,
-    imageUrl: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9',
-    quantity: '1 kg',
-    isHotDeal: true
-  },
-  {
-    id: 'f4',
-    name: 'Bananas',
-    category: 'Fruits',
-    mrp: 60,
-    sellingPrice: 50,
-    imageUrl: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9',
-    quantity: '1 dozen',
-  },
-  {
-    id: 'f5',
-    name: 'Paneer',
-    category: 'Dairy',
-    mrp: 320,
-    sellingPrice: 280,
-    imageUrl: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9',
-    quantity: '500g',
-    isHotDeal: true
-  },
-  {
-    id: 'f6',
-    name: 'Chicken Breast',
-    category: 'Meat',
-    mrp: 350,
-    sellingPrice: 320,
-    imageUrl: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9',
-    quantity: '500g',
-  },
-  {
-    id: 'f7',
-    name: 'Mixed Vegetables',
-    category: 'Frozen',
-    mrp: 120,
-    sellingPrice: 99,
-    imageUrl: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9',
-    quantity: '500g',
-  },
-  {
-    id: 'f8',
-    name: 'French Fries',
-    category: 'Frozen',
-    mrp: 160,
-    sellingPrice: 135,
-    imageUrl: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9',
-    quantity: '400g',
-    isHotDeal: true
-  },
-];
-
-// Extract unique categories
-const categories = ['All Products', ...Array.from(new Set(mockFreshProducts.map(product => product.category)))];
+// Categories that are considered "fresh"
+const FRESH_CATEGORIES = ['Vegetables', 'Fruits', 'Dairy', 'Meat', 'Frozen'];
 
 const XstoreFresh = () => {
   const { cart, addToCart } = useCart();
   const { currentCity } = useCity();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Products');
-  const [showHotDealsOnly, setShowHotDealsOnly] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<string[]>(['All Products']);
   
-  // Filter products based on search, category, and hot deals
-  const filteredProducts = mockFreshProducts
+  // Fetch products when component mounts
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const fetchedProducts = await getProducts();
+        
+        // Filter only fresh products
+        const freshProducts = fetchedProducts.filter(
+          product => FRESH_CATEGORIES.includes(product.category)
+        );
+        
+        setProducts(freshProducts);
+        
+        // Extract unique categories
+        const uniqueCategories = ['All Products', ...Array.from(new Set(freshProducts.map(product => product.category)))];
+        setCategories(uniqueCategories);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        toast({
+          title: "Failed to fetch products",
+          description: "Please check your connection and try again",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProducts();
+  }, [toast]);
+  
+  // Filter products based on search, category, and city
+  const filteredProducts = products
     .filter(product => product.name.toLowerCase().includes(searchTerm.toLowerCase()))
     .filter(product => selectedCategory === 'All Products' || product.category === selectedCategory)
-    .filter(product => !showHotDealsOnly || product.isHotDeal);
+    .filter(product => !currentCity || !product.cities || product.cities.includes(currentCity));
 
   // Handle view cart click
   const handleViewCart = () => {
@@ -137,7 +94,7 @@ const XstoreFresh = () => {
             </div>
             <div className="md:w-1/2 md:pl-12">
               <img 
-                src="https://images.unsplash.com/photo-1721322800607-8c38375eef04" 
+                src="https://images.unsplash.com/photo-1600108276103-ead8307d036b" 
                 alt="Fresh produce" 
                 className="rounded-lg shadow-lg" 
               />
@@ -201,7 +158,11 @@ const XstoreFresh = () => {
         </div>
         
         {/* Products Grid */}
-        {filteredProducts.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="h-12 w-12 animate-spin text-xstore-green" />
+          </div>
+        ) : filteredProducts.length === 0 ? (
           <div className="text-center py-16">
             <h3 className="text-xl font-medium text-gray-600">No products found</h3>
             <p className="mt-2 text-gray-500">Try adjusting your search or filters</p>

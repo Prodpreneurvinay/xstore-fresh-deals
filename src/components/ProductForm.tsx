@@ -21,13 +21,13 @@ import {
 } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { Upload, X, Image } from 'lucide-react';
-import { AVAILABLE_CITIES } from '@/context/CityContext';
 import { Product } from '@/components/ProductCard';
 
 type ProductFormProps = {
   product?: Product;
   onSubmit: (data: ProductFormData) => void;
   onCancel: () => void;
+  availableCities?: string[];
 };
 
 export type ProductFormData = Omit<Product, 'id'> & {
@@ -48,7 +48,7 @@ const CATEGORIES = [
   'Frozen'
 ];
 
-const ProductForm = ({ product, onSubmit, onCancel }: ProductFormProps) => {
+const ProductForm = ({ product, onSubmit, onCancel, availableCities = [] }: ProductFormProps) => {
   const [previewImage, setPreviewImage] = useState<string | undefined>(product?.imageUrl);
   
   const form = useForm<ProductFormData>({
@@ -61,7 +61,7 @@ const ProductForm = ({ product, onSubmit, onCancel }: ProductFormProps) => {
       expiryDate: product?.expiryDate || '',
       quantity: product?.quantity || '',
       isHotDeal: product?.isHotDeal || false,
-      cities: []
+      cities: product?.cities || []
     }
   });
   
@@ -294,7 +294,7 @@ const ProductForm = ({ product, onSubmit, onCancel }: ProductFormProps) => {
         <div className="space-y-4">
           <FormLabel>City Availability</FormLabel>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {AVAILABLE_CITIES.map((city) => (
+            {availableCities.map((city) => (
               <div key={city} className="flex items-center space-x-2">
                 <Checkbox 
                   id={`city-${city}`} 

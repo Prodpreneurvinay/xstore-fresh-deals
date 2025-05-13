@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, TrendingUp } from 'lucide-react';
@@ -9,10 +8,13 @@ export type Product = {
   category: string;
   mrp: number;
   sellingPrice: number;
-  imageUrl: string;
+  imageUrl?: string;
   expiryDate?: string;
   quantity?: string;
   isHotDeal?: boolean;
+  cities?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 type ProductCardProps = {

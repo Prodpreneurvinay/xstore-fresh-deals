@@ -9,7 +9,96 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      cities: {
+        Row: {
+          id: string
+          name: string
+        }
+        Insert: {
+          id?: string
+          name: string
+        }
+        Update: {
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      product_cities: {
+        Row: {
+          city_id: string | null
+          id: string
+          product_id: string | null
+        }
+        Insert: {
+          city_id?: string | null
+          id?: string
+          product_id?: string | null
+        }
+        Update: {
+          city_id?: string | null
+          id?: string
+          product_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_cities_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_cities_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          category: string
+          created_at: string | null
+          expiry_date: string | null
+          id: string
+          image_url: string | null
+          is_hot_deal: boolean | null
+          mrp: number
+          name: string
+          quantity: string | null
+          selling_price: number
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          image_url?: string | null
+          is_hot_deal?: boolean | null
+          mrp: number
+          name: string
+          quantity?: string | null
+          selling_price: number
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          image_url?: string | null
+          is_hot_deal?: boolean | null
+          mrp?: number
+          name?: string
+          quantity?: string | null
+          selling_price?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
