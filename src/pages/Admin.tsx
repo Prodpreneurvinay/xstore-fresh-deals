@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,9 @@ import {
   Edit,
   Trash,
   Loader2,
-  MapPin
+  MapPin,
+  Eye,
+  CheckCircle
 } from 'lucide-react';
 import { Product } from '@/components/ProductCard';
 import ProductForm, { ProductFormData } from '@/components/ProductForm';
@@ -25,30 +28,36 @@ import {
   DialogHeader,
 } from '@/components/ui/dialog';
 import { getProducts, saveProduct, deleteProduct, getCities } from '@/services/productService';
+import { getOrders, updateOrderStatus, Order } from '@/services/orderService';
 import CitiesTab from '@/components/CitiesTab';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [orderSearchTerm, setOrderSearchTerm] = useState("");
   const [showProductForm, setShowProductForm] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<Product | undefined>(undefined);
   const [loading, setLoading] = useState(true);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [availableCities, setAvailableCities] = useState<string[]>([]);
   const { toast } = useToast();
   
-  // Fetch products and cities when component mounts
+  // Fetch products, orders, and cities when component mounts
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [fetchedProducts, fetchedCities] = await Promise.all([
+        const [fetchedProducts, fetchedCities, fetchedOrders] = await Promise.all([
           getProducts(),
-          getCities()
+          getCities(),
+          getOrders()
         ]);
         
         setProducts(fetchedProducts);
         setAvailableCities(fetchedCities);
+        setOrders(fetchedOrders);
       } catch (error) {
         console.error("Error fetching data:", error);
         toast({
@@ -58,6 +67,7 @@ const AdminDashboard = () => {
         });
       } finally {
         setLoading(false);
+        setOrdersLoading(false);
       }
     };
     
@@ -67,6 +77,12 @@ const AdminDashboard = () => {
   const filteredProducts = products.filter(product => 
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.category.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredOrders = orders.filter(order => 
+    order.shop_name.toLowerCase().includes(orderSearchTerm.toLowerCase()) ||
+    order.city.toLowerCase().includes(orderSearchTerm.toLowerCase()) ||
+    order.status?.toLowerCase().includes(orderSearchTerm.toLowerCase())
   );
   
   const handleAddProduct = () => {
@@ -86,6 +102,22 @@ const AdminDashboard = () => {
       toast({
         title: "Product Deleted",
         description: "The product has been successfully deleted.",
+      });
+    }
+  };
+
+  const handleUpdateOrderStatus = async (orderId: string, status: string) => {
+    const success = await updateOrderStatus(orderId, status);
+    if (success) {
+      setOrders(orders.map(order => 
+        order.id === orderId 
+          ? { ...order, status, updated_at: new Date().toISOString() } 
+          : order
+      ));
+      
+      toast({
+        title: "Order Updated",
+        description: `Order status changed to ${status}`,
       });
     }
   };
@@ -125,6 +157,34 @@ const AdminDashboard = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Format date for displaying
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-IN', { 
+      day: 'numeric', 
+      month: 'short', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Get status badge color
+  const getStatusBadgeClass = (status: string) => {
+    switch(status?.toLowerCase()) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'processing':
+        return 'bg-gray-100 text-gray-800';
+      case 'delivering':
+        return 'bg-blue-100 text-blue-800';
+      case 'delivered':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
   
@@ -234,14 +294,27 @@ const AdminDashboard = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div className="bg-white rounded-lg shadow p-6">
                   <h3 className="text-gray-500 text-sm mb-1">Total Orders</h3>
-                  <p className="text-3xl font-bold">428</p>
-                  <span className="text-green-500 text-sm">+18% from last month</span>
+                  <p className="text-3xl font-bold">{orders.length || 0}</p>
+                  <span className="text-green-500 text-sm">
+                    {orders.filter(o => {
+                      const createdAt = new Date(o.created_at);
+                      const today = new Date();
+                      return createdAt.getDate() === today.getDate() && 
+                             createdAt.getMonth() === today.getMonth() &&
+                             createdAt.getFullYear() === today.getFullYear();
+                    }).length} new today
+                  </span>
                 </div>
                 
                 <div className="bg-white rounded-lg shadow p-6">
                   <h3 className="text-gray-500 text-sm mb-1">Revenue</h3>
-                  <p className="text-3xl font-bold">₹142,540</p>
-                  <span className="text-green-500 text-sm">+24% from last month</span>
+                  <p className="text-3xl font-bold">₹{orders.reduce((sum, order) => sum + order.total, 0).toFixed(2)}</p>
+                  <span className="text-green-500 text-sm">+{orders.filter(o => {
+                    const createdAt = new Date(o.created_at);
+                    const lastMonth = new Date();
+                    lastMonth.setMonth(lastMonth.getMonth() - 1);
+                    return createdAt > lastMonth;
+                  }).length}% from last month</span>
                 </div>
                 
                 <div className="bg-white rounded-lg shadow p-6">
@@ -255,7 +328,9 @@ const AdminDashboard = () => {
                 
                 <div className="bg-white rounded-lg shadow p-6">
                   <h3 className="text-gray-500 text-sm mb-1">Active Customers</h3>
-                  <p className="text-3xl font-bold">86</p>
+                  <p className="text-3xl font-bold">
+                    {new Set(orders.map(order => order.phone_number)).size}
+                  </p>
                   <span className="text-green-500 text-sm">+12 new this week</span>
                 </div>
               </div>
@@ -264,22 +339,42 @@ const AdminDashboard = () => {
                 <div className="bg-white rounded-lg shadow p-6">
                   <h3 className="font-semibold mb-4">Recent Orders</h3>
                   <div className="space-y-4">
-                    {[1, 2, 3, 4, 5].map(order => (
-                      <div key={order} className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-md">
-                        <div>
-                          <h4 className="font-medium">Order #{1000 + order}</h4>
-                          <p className="text-sm text-gray-500">ABC General Store</p>
-                        </div>
-                        <div className="text-right">
-                          <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Delivering</span>
-                          <p className="text-sm text-gray-500 mt-1">₹{1200 + (order * 100)}</p>
-                        </div>
+                    {ordersLoading ? (
+                      <div className="flex justify-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin text-xstore-green" />
                       </div>
-                    ))}
+                    ) : orders.length > 0 ? (
+                      orders.slice(0, 5).map(order => (
+                        <div key={order.id} className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-md">
+                          <div>
+                            <h4 className="font-medium">{order.shop_name}</h4>
+                            <p className="text-sm text-gray-500">{formatDate(order.created_at)}</p>
+                          </div>
+                          <div className="text-right">
+                            <span className={`${getStatusBadgeClass(order.status)} text-xs px-2 py-1 rounded`}>
+                              {order.status || 'Pending'}
+                            </span>
+                            <p className="text-sm text-gray-500 mt-1">₹{order.total.toFixed(2)}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        No orders yet
+                      </div>
+                    )}
                   </div>
-                  <div className="mt-4 text-center">
-                    <Button variant="link" className="text-xstore-green">View All Orders</Button>
-                  </div>
+                  {orders.length > 0 && (
+                    <div className="mt-4 text-center">
+                      <Button 
+                        variant="link" 
+                        className="text-xstore-green" 
+                        onClick={() => setActiveTab("orders")}
+                      >
+                        View All Orders
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="bg-white rounded-lg shadow p-6">
@@ -463,69 +558,88 @@ const AdminDashboard = () => {
                 <div className="p-4 border-b flex flex-col sm:flex-row gap-4">
                   <div className="relative flex-grow">
                     <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <Input placeholder="Search orders..." className="pl-10" />
+                    <Input 
+                      placeholder="Search orders..." 
+                      className="pl-10" 
+                      value={orderSearchTerm}
+                      onChange={(e) => setOrderSearchTerm(e.target.value)}
+                    />
                   </div>
                 </div>
                 
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 text-gray-700 uppercase text-xs">
-                      <tr>
-                        <th className="py-3 px-4 text-left">Order ID</th>
-                        <th className="py-3 px-4 text-left">Shop Name</th>
-                        <th className="py-3 px-4 text-left">City</th>
-                        <th className="py-3 px-4 text-left">Date</th>
-                        <th className="py-3 px-4 text-left">Total</th>
-                        <th className="py-3 px-4 text-left">Status</th>
-                        <th className="py-3 px-4 text-left">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(item => (
-                        <tr key={item} className="hover:bg-gray-50">
-                          <td className="py-3 px-4">#ORD-{1000 + item}</td>
-                          <td className="py-3 px-4">Shop Name #{item}</td>
-                          <td className="py-3 px-4">Mumbai</td>
-                          <td className="py-3 px-4">May {10 + item}, 2025</td>
-                          <td className="py-3 px-4">
-                            <span className="font-medium">₹{3200 + (item * 100)}</span>
-                          </td>
-                          <td className="py-3 px-4">
-                            <span className={`px-2 py-1 rounded-full text-xs ${
-                              item % 4 === 0 ? 'bg-yellow-100 text-yellow-800' : 
-                              item % 3 === 0 ? 'bg-blue-100 text-blue-800' : 
-                              item % 2 === 0 ? 'bg-green-100 text-green-800' : 
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {
-                                item % 4 === 0 ? 'Pending' : 
-                                item % 3 === 0 ? 'Delivering' : 
-                                item % 2 === 0 ? 'Delivered' : 
-                                'Processing'
-                              }
-                            </span>
-                          </td>
-                          <td className="py-3 px-4">
-                            <div className="flex items-center space-x-2">
-                              <Button variant="ghost" size="sm">View</Button>
-                              <Button variant="ghost" size="sm">Update</Button>
-                            </div>
-                          </td>
+                {ordersLoading ? (
+                  <div className="p-16 flex justify-center items-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-xstore-green" />
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 text-gray-700 uppercase text-xs">
+                        <tr>
+                          <th className="py-3 px-4 text-left">Order ID</th>
+                          <th className="py-3 px-4 text-left">Shop Name</th>
+                          <th className="py-3 px-4 text-left">City</th>
+                          <th className="py-3 px-4 text-left">Date</th>
+                          <th className="py-3 px-4 text-left">Total</th>
+                          <th className="py-3 px-4 text-left">Status</th>
+                          <th className="py-3 px-4 text-left">Actions</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                
-                <div className="p-4 border-t flex justify-between items-center">
-                  <span className="text-sm text-gray-500">
-                    Showing 1-10 of 428 orders
-                  </span>
-                  <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm" disabled>Previous</Button>
-                    <Button variant="outline" size="sm">Next</Button>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {filteredOrders.length > 0 ? filteredOrders.map(order => (
+                          <tr key={order.id} className="hover:bg-gray-50">
+                            <td className="py-3 px-4">{order.id.substring(0, 8)}</td>
+                            <td className="py-3 px-4">{order.shop_name}</td>
+                            <td className="py-3 px-4">{order.city}</td>
+                            <td className="py-3 px-4">{formatDate(order.created_at)}</td>
+                            <td className="py-3 px-4">
+                              <span className="font-medium">₹{order.total.toFixed(2)}</span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadgeClass(order.status || 'pending')}`}>
+                                {order.status || 'Pending'}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center space-x-2">
+                                <Button variant="ghost" size="sm">
+                                  <Eye size={16} />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="text-green-600"
+                                  onClick={() => handleUpdateOrderStatus(order.id, 'delivered')}
+                                  disabled={order.status === 'delivered'}
+                                >
+                                  <CheckCircle size={16} />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        )) : (
+                          <tr>
+                            <td colSpan={7} className="py-8 text-center text-gray-500">
+                              No orders found
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
-                </div>
+                )}
+                
+                {!ordersLoading && filteredOrders.length > 0 && (
+                  <div className="p-4 border-t flex justify-between items-center">
+                    <span className="text-sm text-gray-500">
+                      Showing {filteredOrders.length} of {orders.length} orders
+                    </span>
+                    <div className="flex items-center space-x-2">
+                      <Button variant="outline" size="sm" disabled>Previous</Button>
+                      <Button variant="outline" size="sm">Next</Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </TabsContent>
             

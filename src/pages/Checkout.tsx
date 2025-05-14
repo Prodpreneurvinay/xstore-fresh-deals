@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -9,6 +10,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { MapPin } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useCity } from '@/context/CityContext';
+import { createOrder } from '@/services/orderService';
 
 const Checkout = () => {
   const { cart, clearCart } = useCart();
@@ -25,6 +27,7 @@ const Checkout = () => {
   });
   
   const [isExistingPhoneVerified, setIsExistingPhoneVerified] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Redirect to city selection if no city is selected
   if (!currentCity) {
@@ -85,7 +88,7 @@ const Checkout = () => {
     }
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validation
@@ -98,20 +101,40 @@ const Checkout = () => {
       return;
     }
     
-    // In a real app, this would call an API to submit the order
-    console.log("Order placed:", {
-      city: currentCity,
-      shopName: formData.shopName,
-      phoneNumber: formData.phoneNumber,
-      address: formData.address,
-      isExistingCustomer: formData.isExistingCustomer,
-      items: cart.items,
-      total: cart.total
-    });
+    setIsSubmitting(true);
     
-    // Clear the cart and navigate to success page
-    clearCart();
-    navigate('/order-success');
+    try {
+      // Create an order in the database
+      const order = await createOrder({
+        shop_name: formData.shopName,
+        phone_number: formData.phoneNumber,
+        address: formData.address,
+        city: currentCity,
+        total: cart.total,
+        items: cart.items
+      });
+      
+      if (order) {
+        // Clear the cart and navigate to success page
+        clearCart();
+        navigate('/order-success');
+      } else {
+        toast({
+          title: "Order failed",
+          description: "There was an error placing your order. Please try again.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error placing order:", error);
+      toast({
+        title: "Order failed",
+        description: "There was an error placing your order. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   return (
@@ -233,8 +256,12 @@ const Checkout = () => {
               </div>
               
               <div className="mt-8">
-                <Button type="submit" className="w-full bg-xstore-green">
-                  Place Order
+                <Button 
+                  type="submit" 
+                  className="w-full bg-xstore-green"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Placing Order..." : "Place Order"}
                 </Button>
                 <p className="text-xs text-gray-500 mt-2 text-center">
                   No payment required - pay on delivery
