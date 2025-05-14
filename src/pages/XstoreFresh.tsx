@@ -5,11 +5,13 @@ import ProductCard, { Product } from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
 import { useCity } from '@/context/CityContext';
-import { Filter, Search, ShoppingCart, Leaf, Loader2 } from 'lucide-react';
+import { Filter, Search, ShoppingCart, Leaf, Loader2, TrendingUp } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import { getProducts } from '@/services/productService';
 import { useToast } from '@/components/ui/use-toast';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import CategoryCard from '@/components/CategoryCard';
 
 // Categories that are considered "fresh"
 const FRESH_CATEGORIES = ['Vegetables', 'Fruits', 'Dairy', 'Meat', 'Frozen'];
@@ -77,6 +79,9 @@ const XstoreFresh = () => {
     .filter(product => selectedCategory === 'All Products' || product.category === selectedCategory)
     .filter(product => !currentCity || !product.cities || product.cities.includes(currentCity));
 
+  // Get hot deals products
+  const hotDealsProducts = filteredProducts.filter(product => product.isHotDeal);
+
   // Handle view cart click
   const handleViewCart = () => {
     navigate('/cart');
@@ -137,40 +142,57 @@ const XstoreFresh = () => {
           )}
         </div>
         
-        {/* Filters and Search */}
-        <div className="bg-white p-4 rounded-lg shadow-sm mb-8">
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Search */}
-            <div className="relative flex-grow">
-              <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                type="search"
-                placeholder="Search fresh products..."
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            
-            {/* Category Filter */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
-              <Filter size={18} className="text-gray-500 flex-shrink-0" />
+        {/* Category Visual Bar */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4">Categories</h2>
+          <ScrollArea className="whitespace-nowrap pb-4">
+            <div className="flex gap-4">
               {categories.map((category) => (
-                <Button
+                <CategoryCard 
                   key={category}
-                  variant={selectedCategory === category ? "default" : "outline"}
-                  className={selectedCategory === category ? "bg-xstore-green" : ""}
-                  size="sm"
+                  category={category}
+                  isSelected={selectedCategory === category}
                   onClick={() => setSelectedCategory(category)}
-                >
-                  {category}
-                </Button>
+                />
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
+        
+        {/* Hot Deals Section */}
+        {hotDealsProducts.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center mb-4">
+              <TrendingUp size={24} className="text-xstore-orange mr-2" />
+              <h2 className="text-2xl font-semibold">Hot Deals</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {hotDealsProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAddToCart={addToCart}
+                />
               ))}
             </div>
           </div>
+        )}
+        
+        {/* Search */}
+        <div className="relative flex-grow mb-6">
+          <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <Input
+            type="search"
+            placeholder="Search fresh products..."
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
         
-        {/* Products Grid */}
+        {/* All Products Grid */}
+        <h2 className="text-2xl font-semibold mb-4">{selectedCategory === 'All Products' ? 'All Products' : selectedCategory}</h2>
+        
         {loading ? (
           <div className="flex justify-center items-center py-20">
             <Loader2 className="h-12 w-12 animate-spin text-xstore-green" />

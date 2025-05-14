@@ -17,7 +17,7 @@ const Index = () => {
   
   return <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-xstore-green-light to-xstore-green py-16 text-white bg-orange-500">
+      <section className="bg-gradient-to-br from-xstore-green-light to-xstore-green py-16 text-white">
         <div className="container-custom">
           <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-12">
             <div className="order-2 md:order-1">
@@ -26,10 +26,7 @@ const Index = () => {
                 From discounted near-expiry products to fresh daily produce, we've got your business covered.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button asChild size="lg" className="bg-white text-xstore-green hover:bg-gray-100 border-2 border-white">
-                  <Link to="/select-city">Get Started</Link>
-                </Button>
-                <Button asChild variant="outline" size="lg" className="border-2 border-white text-white hover:bg-white/10">
+                <Button asChild size="lg" className="bg-white text-xstore-green hover:bg-gray-100 border-2 border-white shadow-lg">
                   <Link to="/products">Browse Products</Link>
                 </Button>
               </div>
@@ -42,7 +39,7 @@ const Index = () => {
       </section>
       
       {/* Services Section */}
-      <section className="py-16">
+      <section className="py-16 bg-gray-50">
         <div className="container-custom">
           <h2 className="text-3xl font-bold text-center mb-12">Our Services</h2>
           
@@ -62,7 +59,7 @@ const Index = () => {
                   Perfect for retail shopkeepers looking to maximize profits.
                 </p>
                 <div className="flex items-center">
-                  <Button asChild className="bg-xstore-orange hover:bg-xstore-orange-dark">
+                  <Button asChild className="bg-xstore-orange hover:bg-xstore-orange-dark shadow-md">
                     <Link to="/select-city">
                       Explore Products
                       <ArrowRight size={16} className="ml-2" />
@@ -87,7 +84,7 @@ const Index = () => {
                   Ideal for restaurants and hotels.
                 </p>
                 <div className="flex items-center">
-                  <Button asChild>
+                  <Button asChild className="shadow-md">
                     <Link to="/select-city">
                       Fresh Produce
                       <ArrowRight size={16} className="ml-2" />
@@ -101,7 +98,7 @@ const Index = () => {
       </section>
       
       {/* How It Works */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-white">
         <div className="container-custom">
           <h2 className="text-3xl font-bold text-center mb-4">How It Works</h2>
           <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
@@ -110,7 +107,7 @@ const Index = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Step 1 */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-xstore-green rounded-full text-white flex items-center justify-center mb-4">
                 <span className="text-xl font-bold">1</span>
               </div>
@@ -121,7 +118,7 @@ const Index = () => {
             </div>
             
             {/* Step 2 */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-xstore-green rounded-full text-white flex items-center justify-center mb-4">
                 <span className="text-xl font-bold">2</span>
               </div>
@@ -132,7 +129,7 @@ const Index = () => {
             </div>
             
             {/* Step 3 */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-xstore-green rounded-full text-white flex items-center justify-center mb-4">
                 <span className="text-xl font-bold">3</span>
               </div>
@@ -146,13 +143,13 @@ const Index = () => {
       </section>
       
       {/* CTA Section */}
-      <section className="py-16 bg-xstore-orange text-white">
+      <section className="py-16 bg-gradient-to-r from-xstore-orange to-xstore-orange-light text-white">
         <div className="container-custom text-center">
           <h2 className="text-3xl font-bold mb-6">Ready to Get Started?</h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
             Join hundreds of businesses already using Xstore to optimize their supply chain
           </p>
-          <Button asChild size="lg" className="bg-white text-xstore-orange hover:bg-gray-100">
+          <Button asChild size="lg" className="bg-white text-xstore-orange hover:bg-gray-100 shadow-lg">
             <Link to="/select-city">Select Your City</Link>
           </Button>
         </div>
