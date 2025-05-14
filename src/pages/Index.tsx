@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,6 @@ import { Link } from 'react-router-dom';
 import { ShoppingBag, Salad, ArrowRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useCity } from '@/context/CityContext';
-
 const Index = () => {
   const {
     cart
@@ -14,7 +12,6 @@ const Index = () => {
   const {
     currentCity
   } = useCity();
-  
   return <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-xstore-green-light to-xstore-green py-16 text-white">
@@ -32,7 +29,7 @@ const Index = () => {
               </div>
             </div>
             <div className="order-1 md:order-2">
-              <img alt="Xstore products" className="w-full h-auto rounded-xl shadow-lg" src="/lovable-uploads/119d1676-880a-4a1a-bbf6-4b15e4fa5260.png" />
+              <img alt="Xstore products" className="w-full h-auto rounded-xl shadow-lg" src="/lovable-uploads/ae43353f-dd34-482e-a83a-a410c24a844d.png" />
             </div>
           </div>
         </div>
@@ -156,5 +153,4 @@ const Index = () => {
       </section>
     </Layout>;
 };
-
 export default Index;
