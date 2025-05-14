@@ -4,7 +4,7 @@ import { Product } from '../components/ProductCard';
 import { useToast } from '@/components/ui/use-toast';
 
 // Types
-type CartItem = {
+export type CartItem = {
   product: Product;
   quantity: number;
 };
