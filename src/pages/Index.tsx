@@ -29,7 +29,7 @@ const Index = () => {
               </div>
             </div>
             <div className="order-1 md:order-2">
-              <img alt="Xstore products" className="w-full h-auto rounded-xl shadow-lg" src="/lovable-uploads/bdbfee39-c596-45eb-8665-4424d63a9f11.png" />
+              <img alt="Xstore products" className="w-full h-auto rounded-xl shadow-lg" src="/lovable-uploads/d7a4a44d-5671-4af7-95b6-3c28f13a611b.png" />
             </div>
           </div>
         </div>
