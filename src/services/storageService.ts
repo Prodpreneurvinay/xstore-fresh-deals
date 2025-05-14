@@ -29,7 +29,7 @@ export const createStorageBucket = async (): Promise<void> => {
 
     // Ensure public access policy exists for the bucket
     const { error: policyError } = await supabase.rpc('create_storage_policy', { 
-      bucket_id: 'products' as string
+      bucket_id: 'products' 
     });
     
     if (policyError && !policyError.message.includes("already exists")) {
