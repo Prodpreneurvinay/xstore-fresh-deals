@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, TrendingUp, ImageOff } from 'lucide-react';
+import { ShoppingCart, TrendingUp, ImageOff, Loader2 } from 'lucide-react';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +27,7 @@ type ProductCardProps = {
 
 const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
   const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
   const discountPercentage = Math.round(
     ((product.mrp - product.sellingPrice) / product.mrp) * 100
   );
@@ -34,6 +35,12 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
   const handleImageError = () => {
     console.log("Image failed to load:", product.imageUrl);
     setImageError(true);
+    setImageLoading(false);
+  };
+
+  const handleImageLoad = () => {
+    console.log("Image loaded successfully:", product.imageUrl);
+    setImageLoading(false);
   };
 
   return (
@@ -55,13 +62,24 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
       <div className="relative w-full">
         <AspectRatio ratio={1/1} className="bg-gray-100">
           {!imageError && product.imageUrl ? (
-            <img 
-              src={product.imageUrl}
-              alt={product.name}
-              className="object-cover w-full h-full transition-opacity"
-              onError={handleImageError}
-              loading="lazy"
-            />
+            <>
+              {imageLoading && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                </div>
+              )}
+              <img 
+                src={product.imageUrl}
+                alt={product.name}
+                className={cn(
+                  "object-contain w-full h-full transition-opacity",
+                  imageLoading ? "opacity-0" : "opacity-100"
+                )}
+                onError={handleImageError}
+                onLoad={handleImageLoad}
+                loading="lazy"
+              />
+            </>
           ) : (
             <div className="flex flex-col items-center justify-center w-full h-full text-gray-400 bg-gray-50">
               <ImageOff size={32} />

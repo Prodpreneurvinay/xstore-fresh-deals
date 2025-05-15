@@ -46,40 +46,62 @@ export const ensureProductsBucket = async (): Promise<boolean> => {
 };
 
 /**
- * Uploads a file to Supabase Storage
+ * Uploads a file to Supabase Storage with optimized settings for product images
  * @param file - File to upload
- * @param bucketName - Name of the bucket to upload to
- * @param path - Optional path within the bucket
  * @returns Promise<string | null> - URL of the uploaded file or null if upload failed
  */
-export const uploadFile = async (
-  file: File, 
-  bucketName: string,
-  path: string = ''
-): Promise<string | null> => {
+export const uploadFile = async (file: File): Promise<string | null> => {
   try {
-    // First ensure the bucket exists
-    if (bucketName === 'products') {
-      const bucketExists = await ensureProductsBucket();
-      if (!bucketExists) {
-        return null;
-      }
+    console.log("Starting upload process for file:", file.name);
+    
+    // First ensure the products bucket exists
+    const bucketExists = await ensureProductsBucket();
+    if (!bucketExists) {
+      console.error("Products bucket doesn't exist and couldn't be created");
+      toast({
+        title: "Upload failed",
+        description: "Storage bucket is not available. Please try again later.",
+        variant: "destructive"
+      });
+      return null;
     }
     
+    // Check file size (limit to 5MB for example)
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    if (file.size > MAX_FILE_SIZE) {
+      toast({
+        title: "File too large",
+        description: "Please select an image under 5MB",
+        variant: "destructive"
+      });
+      return null;
+    }
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select an image file",
+        variant: "destructive"
+      });
+      return null;
+    }
+
     // Generate a unique file name to avoid collisions
     const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 10);
     const fileExtension = file.name.split('.').pop();
-    const fileName = `${timestamp}-${file.name.replace(/\s+/g, '_')}`;
-    const fullPath = path ? `${path}/${fileName}` : fileName;
+    const fileName = `product-${timestamp}-${randomString}.${fileExtension}`;
     
-    console.log(`Uploading ${fileName} to ${bucketName}/${path || ''}...`);
+    console.log(`Uploading ${fileName} to products bucket...`);
     
-    // Upload the file
+    // Upload the file - use direct storage operations instead of RPC
     const { data, error } = await supabase.storage
-      .from(bucketName)
-      .upload(fullPath, file, {
+      .from('products')
+      .upload(fileName, file, {
         cacheControl: '3600',
-        upsert: false
+        upsert: false,
+        contentType: file.type
       });
     
     if (error) {
@@ -96,7 +118,7 @@ export const uploadFile = async (
     
     // Get the public URL
     const { data: { publicUrl } } = supabase.storage
-      .from(bucketName)
+      .from('products')
       .getPublicUrl(data?.path || '');
     
     console.log("Public URL for uploaded file:", publicUrl);
@@ -105,7 +127,7 @@ export const uploadFile = async (
     console.error("Error in uploadFile:", error);
     toast({
       title: "Upload failed",
-      description: "An unexpected error occurred",
+      description: "An unexpected error occurred during upload",
       variant: "destructive"
     });
     return null;
@@ -118,6 +140,8 @@ export const uploadFile = async (
  */
 export const checkStorageConfiguration = async (): Promise<void> => {
   try {
+    console.log("Checking storage configuration...");
+    
     // Check if the products bucket exists
     const { data: buckets, error: listError } = await supabase.storage.listBuckets();
     
@@ -148,4 +172,3 @@ export const checkStorageConfiguration = async (): Promise<void> => {
     console.error("Error checking storage configuration:", error);
   }
 };
-
