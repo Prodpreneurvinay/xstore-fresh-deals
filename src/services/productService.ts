@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 import { Product } from "@/components/ProductCard";
 import { ProductFormData } from "@/components/ProductForm";
-import { uploadFile } from "@/services/storageService";
+import { uploadFile, checkStorageConfiguration } from "@/services/storageService";
 
 // Type for product from database
 type DatabaseProduct = Database['public']['Tables']['products']['Row'];
@@ -97,14 +97,24 @@ export const getProductCities = async (productId: string): Promise<string[]> => 
 // Upload image to Supabase Storage
 export const uploadProductImage = async (file: File): Promise<string | null> => {
   try {
+    console.log("Starting image upload to products bucket...");
+    // Check storage configuration to debug any issues
+    await checkStorageConfiguration();
+    
+    // Upload the file to the products bucket
     const publicUrl = await uploadFile(file, 'products');
+    
     if (!publicUrl) {
+      console.error("Failed to get public URL for uploaded image");
       toast({
         title: "Image upload failed",
         description: "Could not upload product image",
         variant: "destructive"
       });
+      return null;
     }
+    
+    console.log("Image upload successful, URL:", publicUrl);
     return publicUrl;
   } catch (error) {
     console.error("Error in uploadProductImage:", error);
@@ -163,9 +173,13 @@ export const saveProduct = async (productData: ProductFormData, existingProductI
 
     // Upload the image if provided
     if (productData.imageFile) {
+      console.log("Image file provided, uploading...");
       const uploadedImageUrl = await uploadProductImage(productData.imageFile);
       if (uploadedImageUrl) {
         imageUrl = uploadedImageUrl;
+        console.log("Image uploaded successfully:", imageUrl);
+      } else {
+        console.error("Failed to upload image");
       }
     }
 
