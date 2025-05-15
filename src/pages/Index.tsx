@@ -1,18 +1,23 @@
-import React from 'react';
+
+import React, { useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { ShoppingBag, Salad, ArrowRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useCity } from '@/context/CityContext';
+
 const Index = () => {
-  const {
-    cart
-  } = useCart();
-  const {
-    currentCity
-  } = useCity();
-  return <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
+  const { cart } = useCart();
+  const { currentCity } = useCity();
+  
+  // Fix mobile UX issue: auto-scroll to top on page load
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  return (
+    <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-xstore-green-light to-xstore-green py-16 text-white">
         <div className="container-custom">
@@ -151,6 +156,8 @@ const Index = () => {
           </Button>
         </div>
       </section>
-    </Layout>;
+    </Layout>
+  );
 };
+
 export default Index;

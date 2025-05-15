@@ -1,117 +1,136 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Menu, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MapPin, ShoppingCart, Menu, X } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type NavbarProps = {
-  cartItemCount?: number;
+  cartItemCount: number;
   currentCity?: string;
   showCitySelector?: boolean;
 };
 
 const Navbar = ({ cartItemCount = 0, currentCity, showCitySelector = true }: NavbarProps) => {
+  const isMobile = useIsMobile();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
+  
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+  
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm">
-      <div className="container-custom flex justify-between items-center py-4">
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
-          <div className="flex items-center">
+    <header className="bg-white shadow-sm sticky top-0 z-50">
+      <div className="container-custom py-3">
+        <div className="flex justify-between items-center">
+          {/* Logo */}
+          <Link to="/" className="flex items-center">
             <span className="text-2xl font-bold text-xstore-green">X</span>
             <span className="text-2xl font-bold">store</span>
-          </div>
-        </Link>
-
-        {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-6">
-          {showCitySelector && (
-            <div className="flex items-center">
-              <span className="text-sm text-gray-500 mr-1">Delivering to:</span>
-              <Link 
-                to="/select-city" 
-                className="text-sm font-medium flex items-center hover:text-xstore-green"
-              >
-                {currentCity || 'Select City'}
-                <ChevronDown size={16} className="ml-1" />
-              </Link>
-            </div>
-          )}
-          <nav className="flex items-center gap-6">
-            <Link to="/products" className="hover:text-xstore-green">Products</Link>
-            <Link to="/xstore-fresh" className="hover:text-xstore-green">Xstore Fresh</Link>
+          </Link>
+          
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-8">
+            <Link to="/" className="text-gray-600 hover:text-xstore-green transition-colors">Home</Link>
+            <Link to="/products" className="text-gray-600 hover:text-xstore-green transition-colors">Products</Link>
+            <Link to="/xstore-fresh" className="text-gray-600 hover:text-xstore-green transition-colors">XFresh</Link>
+            <Link to="/about-us" className="text-gray-600 hover:text-xstore-green transition-colors">About Us</Link>
+            <Link to="/contact" className="text-gray-600 hover:text-xstore-green transition-colors">Contact</Link>
           </nav>
-          <Link to="/cart" className="relative">
-            <Button variant="ghost" className="relative p-2">
-              <ShoppingCart size={20} />
-              {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-xstore-orange text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                  {cartItemCount}
-                </span>
-              )}
-            </Button>
-          </Link>
-        </div>
-
-        {/* Mobile Nav Button */}
-        <div className="md:hidden flex items-center gap-3">
-          <Link to="/cart" className="relative">
-            <Button variant="ghost" className="relative p-2">
-              <ShoppingCart size={20} />
-              {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-xstore-orange text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                  {cartItemCount}
-                </span>
-              )}
-            </Button>
-          </Link>
-          <Button 
-            variant="ghost" 
-            className="p-2" 
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </Button>
-        </div>
-      </div>
-
-      {/* Mobile Nav Menu */}
-      {isMenuOpen && (
-        <div className="md:hidden bg-white shadow-md py-4">
-          <div className="container-custom space-y-4">
-            <nav className="flex flex-col gap-4">
-              <Link 
-                to="/products" 
-                className="py-2 hover:text-xstore-green"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Products
-              </Link>
-              <Link 
-                to="/xstore-fresh" 
-                className="py-2 hover:text-xstore-green"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Xstore Fresh
-              </Link>
-            </nav>
+          
+          {/* Right side: City selector + Cart */}
+          <div className="flex items-center gap-2 md:gap-4">
             {showCitySelector && (
-              <div className="pt-4 border-t border-gray-100">
+              <Link 
+                to="/select-city"
+                className="flex items-center gap-1 text-gray-700 hover:text-xstore-green text-sm"
+              >
+                <MapPin size={isMobile ? 18 : 20} />
+                <span className="hidden md:inline">{currentCity || "Select City"}</span>
+              </Link>
+            )}
+            
+            <Link to="/cart" className="relative">
+              <Button 
+                variant={isMobile ? "ghost" : "default"} 
+                className={isMobile ? "p-1" : ""}
+                size={isMobile ? "sm" : "default"}
+              >
+                <ShoppingCart size={isMobile ? 20 : 20} />
+                <span className="hidden md:inline ml-1">Cart</span>
+                {cartItemCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {cartItemCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
+            
+            {/* Mobile menu button */}
+            <Button 
+              variant="ghost"
+              size="sm"
+              className="md:hidden p-1"
+              onClick={toggleMenu}
+            >
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </Button>
+          </div>
+        </div>
+        
+        {/* Mobile Navigation Menu */}
+        {isMenuOpen && (
+          <nav className="md:hidden pt-3 pb-2 border-t mt-3">
+            <ul className="space-y-3">
+              <li>
                 <Link 
-                  to="/select-city" 
-                  className="flex items-center text-sm py-2"
+                  to="/" 
+                  className="block px-2 py-1 text-gray-800 hover:bg-gray-100 rounded-md"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <span className="text-gray-500 mr-2">Delivering to:</span>
-                  <span className="font-medium">{currentCity || 'Select City'}</span>
-                  <ChevronDown size={16} className="ml-1" />
+                  Home
                 </Link>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+              </li>
+              <li>
+                <Link 
+                  to="/products" 
+                  className="block px-2 py-1 text-gray-800 hover:bg-gray-100 rounded-md"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Products
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/xstore-fresh" 
+                  className="block px-2 py-1 text-gray-800 hover:bg-gray-100 rounded-md"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  XFresh
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/about-us" 
+                  className="block px-2 py-1 text-gray-800 hover:bg-gray-100 rounded-md"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/contact" 
+                  className="block px-2 py-1 text-gray-800 hover:bg-gray-100 rounded-md"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Contact
+                </Link>
+              </li>
+            </ul>
+          </nav>
+        )}
+      </div>
     </header>
   );
 };
