@@ -1,9 +1,9 @@
-
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 import { Product } from "@/components/ProductCard";
 import { ProductFormData } from "@/components/ProductForm";
+import { uploadFile } from "@/services/storageService";
 
 // Type for product from database
 type DatabaseProduct = Database['public']['Tables']['products']['Row'];
@@ -97,28 +97,14 @@ export const getProductCities = async (productId: string): Promise<string[]> => 
 // Upload image to Supabase Storage
 export const uploadProductImage = async (file: File): Promise<string | null> => {
   try {
-    // Generate a unique file path
-    const filePath = `products/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
-    
-    const { error, data } = await supabase.storage
-      .from('products')
-      .upload(filePath, file);
-
-    if (error) {
-      console.error("Error uploading image:", error);
+    const publicUrl = await uploadFile(file, 'products');
+    if (!publicUrl) {
       toast({
         title: "Image upload failed",
-        description: error.message,
+        description: "Could not upload product image",
         variant: "destructive"
       });
-      return null;
     }
-
-    // Get public URL for the uploaded file
-    const { data: { publicUrl } } = supabase.storage
-      .from('products')
-      .getPublicUrl(filePath);
-
     return publicUrl;
   } catch (error) {
     console.error("Error in uploadProductImage:", error);
