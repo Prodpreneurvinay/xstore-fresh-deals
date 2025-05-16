@@ -44,6 +44,18 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
     setImageLoading(false);
   };
 
+  // Check for empty or invalid image URL
+  React.useEffect(() => {
+    if (!product.imageUrl) {
+      setImageError(true);
+      setImageLoading(false);
+    } else {
+      // Reset state when URL changes
+      setImageError(false);
+      setImageLoading(true);
+    }
+  }, [product.imageUrl]);
+
   return (
     <div className="relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md">
       {/* Hot Deal Badge */}

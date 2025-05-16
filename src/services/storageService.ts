@@ -100,17 +100,34 @@ export const uploadFile = async (file: File): Promise<string | null> => {
       .from('products')
       .upload(fileName, file, {
         cacheControl: '3600',
-        upsert: false,
-        contentType: file.type
+        upsert: true // Changed from false to true to allow overwrites
       });
     
     if (error) {
+      // Log detailed error information
       console.error("Error uploading file:", error);
-      toast({
-        title: "Upload failed",
-        description: error.message,
-        variant: "destructive"
-      });
+      console.error("Error details:", JSON.stringify(error, null, 2));
+      
+      // More specific error messages based on error type
+      if (error.message.includes("Permission")) {
+        toast({
+          title: "Permission error",
+          description: "You don't have permission to upload files. Please check your account permissions.",
+          variant: "destructive"
+        });
+      } else if (error.message.includes("not found")) {
+        toast({
+          title: "Bucket not found",
+          description: "The storage bucket does not exist. Please contact support.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Upload failed",
+          description: error.message || "An error occurred during upload",
+          variant: "destructive"
+        });
+      }
       return null;
     }
     
@@ -167,6 +184,33 @@ export const checkStorageConfiguration = async (): Promise<void> => {
       
       // Check if the bucket is public
       console.log("Products bucket is public:", productsBucket.public);
+      
+      // Test the storage policy by attempting to upload a small test file
+      const testBlob = new Blob(['test'], { type: 'text/plain' });
+      const testFile = new File([testBlob], 'test.txt', { type: 'text/plain' });
+      
+      const { error: uploadError } = await supabase.storage
+        .from('products')
+        .upload('test-policy.txt', testFile, { 
+          upsert: true,
+          cacheControl: '0'
+        });
+        
+      if (uploadError) {
+        console.error("Failed policy test upload:", uploadError);
+        console.error("Policy issue detected! Error details:", JSON.stringify(uploadError, null, 2));
+      } else {
+        console.log("Storage policy test successful - upload permissions OK");
+        
+        // Clean up test file
+        const { error: deleteError } = await supabase.storage
+          .from('products')
+          .remove(['test-policy.txt']);
+          
+        if (deleteError) {
+          console.error("Could not clean up test file:", deleteError);
+        }
+      }
     }
   } catch (error) {
     console.error("Error checking storage configuration:", error);
