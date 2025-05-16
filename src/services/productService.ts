@@ -1,3 +1,4 @@
+
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
@@ -101,8 +102,8 @@ export const uploadProductImage = async (file: File): Promise<string | null> => 
     // Check storage configuration to debug any issues
     await checkStorageConfiguration();
     
-    // Upload the file to the products bucket
-    const publicUrl = await uploadFile(file, 'products');
+    // Upload the file to the products bucket - FIXED: remove second argument
+    const publicUrl = await uploadFile(file);
     
     if (!publicUrl) {
       console.error("Failed to get public URL for uploaded image");

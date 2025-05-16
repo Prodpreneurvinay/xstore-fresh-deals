@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ShoppingCart, TrendingUp, ImageOff, Loader2 } from 'lucide-react';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export type Product = {
   id: string;
@@ -61,25 +62,25 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
       {/* Product Image */}
       <div className="relative w-full">
         <AspectRatio ratio={1/1} className="bg-gray-100">
+          {imageLoading && !imageError && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Skeleton className="h-full w-full absolute" />
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400 z-10" />
+            </div>
+          )}
+          
           {!imageError && product.imageUrl ? (
-            <>
-              {imageLoading && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-                </div>
+            <img 
+              src={product.imageUrl}
+              alt={product.name}
+              className={cn(
+                "object-contain w-full h-full transition-opacity",
+                imageLoading ? "opacity-0" : "opacity-100"
               )}
-              <img 
-                src={product.imageUrl}
-                alt={product.name}
-                className={cn(
-                  "object-contain w-full h-full transition-opacity",
-                  imageLoading ? "opacity-0" : "opacity-100"
-                )}
-                onError={handleImageError}
-                onLoad={handleImageLoad}
-                loading="lazy"
-              />
-            </>
+              onError={handleImageError}
+              onLoad={handleImageLoad}
+              loading="lazy"
+            />
           ) : (
             <div className="flex flex-col items-center justify-center w-full h-full text-gray-400 bg-gray-50">
               <ImageOff size={32} />
