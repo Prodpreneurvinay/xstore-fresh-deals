@@ -1,20 +1,20 @@
-
 import React, { useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useCart } from '@/context/CartContext';
 import { useCity } from '@/context/CityContext';
-
 const AboutUs = () => {
-  const { cart } = useCart();
-  const { currentCity } = useCity();
-  
+  const {
+    cart
+  } = useCart();
+  const {
+    currentCity
+  } = useCity();
+
   // Fix mobile UX issue: auto-scroll to top on page load
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
-
-  return (
-    <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
+  return <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
       <div className="container-custom py-12">
         <h1 className="text-3xl font-bold mb-8">About Xstore</h1>
         
@@ -31,11 +31,7 @@ const AboutUs = () => {
             </p>
           </div>
           <div className="rounded-lg overflow-hidden shadow-lg">
-            <img 
-              src="/lovable-uploads/d8cd9b69-9c4a-469c-989a-a1a74f341829.jpg"
-              alt="Xstore Retail Products" 
-              className="w-full h-64 object-cover"
-            />
+            <img src="/lovable-uploads/d8cd9b69-9c4a-469c-989a-a1a74f341829.jpg" alt="Xstore Retail Products" className="w-full h-64 object-cover" />
           </div>
         </div>
         
@@ -81,11 +77,11 @@ const AboutUs = () => {
           <h2 className="text-2xl font-semibold mb-6 text-center text-xstore-green">Our Impact</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 text-center">
             <div>
-              <p className="text-4xl font-bold text-xstore-green mb-2">₹5 Lakh+</p>
+              <p className="text-4xl font-bold text-xstore-green mb-2">₹21 Lakh+</p>
               <p className="text-gray-600">Worth of food saved last month</p>
             </div>
             <div>
-              <p className="text-4xl font-bold text-xstore-green mb-2">100+</p>
+              <p className="text-4xl font-bold text-xstore-green mb-2">300+</p>
               <p className="text-gray-600">Local businesses benefited</p>
             </div>
             <div>
@@ -145,8 +141,6 @@ const AboutUs = () => {
           </div>
         </div>
       </div>
-    </Layout>
-  );
+    </Layout>;
 };
-
 export default AboutUs;
