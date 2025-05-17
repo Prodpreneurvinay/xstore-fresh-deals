@@ -16,14 +16,14 @@ type CartState = {
 };
 
 type CartAction = 
-  | { type: 'ADD_ITEM'; payload: Product }
+  | { type: 'ADD_ITEM'; payload: { product: Product; quantity: number } }
   | { type: 'REMOVE_ITEM'; payload: { id: string } }
   | { type: 'UPDATE_QUANTITY'; payload: { id: string; quantity: number } }
   | { type: 'CLEAR_CART' };
 
 type CartContextType = {
   cart: CartState;
-  addToCart: (product: Product) => void;
+  addToCart: (product: Product, quantity?: number) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
@@ -40,13 +40,14 @@ const initialCartState: CartState = {
 const cartReducer = (state: CartState, action: CartAction): CartState => {
   switch (action.type) {
     case 'ADD_ITEM': {
-      const existingItem = state.items.find(item => item.product.id === action.payload.id);
+      const { product, quantity } = action.payload;
+      const existingItem = state.items.find(item => item.product.id === product.id);
       
       if (existingItem) {
         // Increment quantity if item exists
         const updatedItems = state.items.map(item => 
-          item.product.id === action.payload.id 
-            ? { ...item, quantity: item.quantity + 1 } 
+          item.product.id === product.id 
+            ? { ...item, quantity: item.quantity + quantity } 
             : item
         );
         
@@ -58,7 +59,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         };
       } else {
         // Add new item
-        const newItem = { product: action.payload, quantity: 1 };
+        const newItem = { product, quantity };
         const updatedItems = [...state.items, newItem];
         
         return {
@@ -123,11 +124,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [cart]);
   
   // Actions
-  const addToCart = (product: Product) => {
-    dispatch({ type: 'ADD_ITEM', payload: product });
+  const addToCart = (product: Product, quantity: number = 1) => {
+    dispatch({ type: 'ADD_ITEM', payload: { product, quantity } });
     toast({
       title: "Added to cart",
-      description: `${product.name} has been added to your cart.`,
+      description: `${quantity} ${quantity === 1 ? 'unit' : 'units'} of ${product.name} has been added to your cart.`,
     });
   };
   

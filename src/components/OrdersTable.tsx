@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Table, 
   TableBody, 
@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 import { Order } from "@/services/orderService";
+import OrderDetails from './OrderDetails';
 
 type OrdersTableProps = {
   orders: Order[];
@@ -28,6 +29,9 @@ type OrdersTableProps = {
 };
 
 const OrdersTable = ({ orders, onViewOrderDetails, onUpdateOrderStatus }: OrdersTableProps) => {
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
   // Function to get appropriate status icon
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -55,57 +59,76 @@ const OrdersTable = ({ orders, onViewOrderDetails, onUpdateOrderStatus }: Orders
     }
   };
 
+  const handleViewDetails = (order: Order) => {
+    setSelectedOrder(order);
+    setIsDetailsOpen(true);
+  };
+
+  const handleCloseDetails = () => {
+    setIsDetailsOpen(false);
+    setSelectedOrder(null);
+  };
+
   return (
-    <Table>
-      <TableCaption>List of all orders</TableCaption>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Order ID</TableHead>
-          <TableHead>Shop Name</TableHead>
-          <TableHead>Phone Number</TableHead>
-          <TableHead>City</TableHead>
-          <TableHead>Date</TableHead>
-          <TableHead className="text-right">Total</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {orders.length === 0 ? (
+    <>
+      <Table>
+        <TableCaption>List of all orders</TableCaption>
+        <TableHeader>
           <TableRow>
-            <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-              No orders found
-            </TableCell>
+            <TableHead>Order ID</TableHead>
+            <TableHead>Shop Name</TableHead>
+            <TableHead>Phone Number</TableHead>
+            <TableHead>City</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead className="text-right">Total</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
-        ) : (
-          orders.map((order) => (
-            <TableRow key={order.id}>
-              <TableCell className="font-medium">{order.id.substring(0, 8)}</TableCell>
-              <TableCell>{order.shop_name}</TableCell>
-              <TableCell>{order.phone_number}</TableCell>
-              <TableCell>{order.city}</TableCell>
-              <TableCell>{formatDate(order.created_at)}</TableCell>
-              <TableCell className="text-right">₹{order.total.toFixed(2)}</TableCell>
-              <TableCell>
-                <div className="flex items-center gap-1.5">
-                  {getStatusIcon(order.status)}
-                  <span className="capitalize">{order.status}</span>
-                </div>
-              </TableCell>
-              <TableCell className="text-right">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => onViewOrderDetails(order)}
-                >
-                  <Eye className="h-4 w-4 mr-1" /> View
-                </Button>
+        </TableHeader>
+        <TableBody>
+          {orders.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                No orders found
               </TableCell>
             </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+          ) : (
+            orders.map((order) => (
+              <TableRow key={order.id}>
+                <TableCell className="font-medium">{order.id.substring(0, 8)}</TableCell>
+                <TableCell>{order.shop_name}</TableCell>
+                <TableCell>{order.phone_number}</TableCell>
+                <TableCell>{order.city}</TableCell>
+                <TableCell>{formatDate(order.created_at)}</TableCell>
+                <TableCell className="text-right">₹{order.total.toFixed(2)}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1.5">
+                    {getStatusIcon(order.status)}
+                    <span className="capitalize">{order.status}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleViewDetails(order)}
+                  >
+                    <Eye className="h-4 w-4 mr-1" /> View
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+
+      <OrderDetails 
+        isOpen={isDetailsOpen}
+        onClose={handleCloseDetails}
+        order={selectedOrder}
+        onStatusUpdate={onUpdateOrderStatus}
+      />
+    </>
   );
 };
 
