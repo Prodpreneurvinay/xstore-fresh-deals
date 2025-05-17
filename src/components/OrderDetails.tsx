@@ -148,7 +148,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                       order.items.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell className="font-medium">
-                            {item.product?.name || "Unknown Product"}
+                            {item.product_name || item.product?.name || "Unknown Product"}
                           </TableCell>
                           <TableCell className="text-right">{item.quantity}</TableCell>
                           <TableCell className="text-right">₹{item.price.toFixed(2)}</TableCell>

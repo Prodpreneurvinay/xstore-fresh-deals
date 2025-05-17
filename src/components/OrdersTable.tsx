@@ -60,6 +60,15 @@ const OrdersTable = ({ orders, onViewOrderDetails, onUpdateOrderStatus }: Orders
   };
 
   const handleViewDetails = (order: Order) => {
+    // Log the order to see what data we have
+    console.log("Order details:", order);
+    if (order.items) {
+      console.log("Order items:", order.items);
+      order.items.forEach(item => {
+        console.log(`Item ${item.id} product_name: ${item.product_name || 'missing'}, from product: ${item.product?.name || 'missing'}`);
+      });
+    }
+    
     setSelectedOrder(order);
     setIsDetailsOpen(true);
   };

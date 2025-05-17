@@ -23,6 +23,8 @@ export interface OrderItem {
   quantity: number;
   price: number;
   created_at: string;
+  product_name?: string;  // Added this field for easier access
+  product_image?: string; // Added this field for easier access
   product?: {
     name: string;
     image_url: string;
@@ -142,9 +144,21 @@ export const getOrders = async (): Promise<Order[]> => {
       return orders;
     }
 
-    // Add items to their respective orders
+    // Process the items to extract product data
+    const processedItems = orderItems.map(item => {
+      // Ensure we have direct access to product name and image
+      return {
+        ...item,
+        product_name: item.products?.name || "Unknown Product",
+        product_image: item.products?.image_url || ""
+      };
+    });
+
+    console.log("Processed order items:", processedItems);
+
+    // Add processed items to their respective orders
     const ordersWithItems = orders.map(order => {
-      const items = orderItems.filter(item => item.order_id === order.id);
+      const items = processedItems.filter(item => item.order_id === order.id);
       return {
         ...order,
         items
