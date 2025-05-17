@@ -123,7 +123,18 @@ export const getOrders = async (): Promise<Order[]> => {
 
     const { data: orderItems, error: itemsError } = await supabase
       .from('order_items')
-      .select('*, products(name, image_url)')
+      .select(`
+        id, 
+        order_id, 
+        product_id, 
+        quantity, 
+        price, 
+        created_at,
+        products (
+          name, 
+          image_url
+        )
+      `)
       .in('order_id', orderIds);
 
     if (itemsError) {
