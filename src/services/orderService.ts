@@ -23,8 +23,9 @@ export interface OrderItem {
   quantity: number;
   price: number;
   created_at: string;
-  product_name?: string;  // Added this field for easier access
-  product_image?: string; // Added this field for easier access
+  product_name: string;  // Now required, not optional
+  product_image?: string;
+  product_category?: string;  // Added field for product category
   product?: {
     name: string;
     image_url: string;
@@ -64,12 +65,15 @@ export const createOrder = async (orderData: {
       return null;
     }
 
-    // Insert order items
+    // Insert order items with more product details
     const orderItems = orderData.items.map(item => ({
       order_id: order.id,
       product_id: item.product.id,
       quantity: item.quantity,
-      price: item.product.sellingPrice
+      price: item.product.sellingPrice,
+      product_name: item.product.name,  // Store product name
+      product_image: item.product.imageUrl || "",  // Store image URL 
+      product_category: item.product.category || ""  // Store category
     }));
 
     const { error: itemsError } = await supabase
@@ -132,9 +136,13 @@ export const getOrders = async (): Promise<Order[]> => {
         quantity, 
         price, 
         created_at,
+        product_name,
+        product_image,
+        product_category,
         products (
           name, 
-          image_url
+          image_url,
+          category
         )
       `)
       .in('order_id', orderIds);
@@ -144,13 +152,14 @@ export const getOrders = async (): Promise<Order[]> => {
       return orders;
     }
 
-    // Process the items to extract product data
+    // Use stored product details with fallback to joined products table
     const processedItems = orderItems.map(item => {
-      // Ensure we have direct access to product name and image
       return {
         ...item,
-        product_name: item.products?.name || "Unknown Product",
-        product_image: item.products?.image_url || ""
+        // Prioritize stored product details, fallback to joined data
+        product_name: item.product_name || item.products?.name || "Unknown Product",
+        product_image: item.product_image || item.products?.image_url || "",
+        product_category: item.product_category || item.products?.category || ""
       };
     });
 
