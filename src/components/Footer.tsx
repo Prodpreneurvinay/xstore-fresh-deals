@@ -1,10 +1,7 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
-
 const Footer = () => {
-  return (
-    <footer className="bg-gray-800 text-white pt-12 pb-6">
+  return <footer className="bg-gray-800 text-white pt-12 pb-6">
       <div className="container-custom">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           <div>
@@ -78,14 +75,10 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <a href="tel:+919876543210" className="text-gray-300 hover:text-white transition-colors duration-200">
-                  Call: +91 98765 43210
-                </a>
+                <a href="tel:+919876543210" className="text-gray-300 hover:text-white transition-colors duration-200">Call: +91 1334354326</a>
               </li>
               <li>
-                <a href="mailto:support@xstore.com" className="text-gray-300 hover:text-white transition-colors duration-200">
-                  Email: support@xstore.com
-                </a>
+                <a href="mailto:support@xstore.com" className="text-gray-300 hover:text-white transition-colors duration-200">Email: support@xstoreindia.shop</a>
               </li>
             </ul>
           </div>
@@ -95,8 +88,6 @@ const Footer = () => {
           <p>© {new Date().getFullYear()} Xstore. All rights reserved.</p>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
-
 export default Footer;
