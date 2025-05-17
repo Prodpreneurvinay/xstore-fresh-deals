@@ -138,12 +138,7 @@ export const getOrders = async (): Promise<Order[]> => {
         created_at,
         product_name,
         product_image,
-        product_category,
-        products (
-          name, 
-          image_url,
-          category
-        )
+        product_category
       `)
       .in('order_id', orderIds);
 
@@ -152,22 +147,11 @@ export const getOrders = async (): Promise<Order[]> => {
       return orders;
     }
 
-    // Use stored product details with fallback to joined products table
-    const processedItems = orderItems.map(item => {
-      return {
-        ...item,
-        // Prioritize stored product details, fallback to joined data
-        product_name: item.product_name || item.products?.name || "Unknown Product",
-        product_image: item.product_image || item.products?.image_url || "",
-        product_category: item.product_category || item.products?.category || ""
-      };
-    });
+    console.log("Order items fetched:", orderItems);
 
-    console.log("Processed order items:", processedItems);
-
-    // Add processed items to their respective orders
+    // Add items to their respective orders
     const ordersWithItems = orders.map(order => {
-      const items = processedItems.filter(item => item.order_id === order.id);
+      const items = orderItems.filter(item => item.order_id === order.id);
       return {
         ...order,
         items

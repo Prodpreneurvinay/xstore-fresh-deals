@@ -30,7 +30,10 @@ export type Database = {
           id: string
           order_id: string
           price: number
+          product_category: string | null
           product_id: string
+          product_image: string | null
+          product_name: string
           quantity: number
         }
         Insert: {
@@ -38,7 +41,10 @@ export type Database = {
           id?: string
           order_id: string
           price: number
+          product_category?: string | null
           product_id: string
+          product_image?: string | null
+          product_name?: string
           quantity: number
         }
         Update: {
@@ -46,7 +52,10 @@ export type Database = {
           id?: string
           order_id?: string
           price?: number
+          product_category?: string | null
           product_id?: string
+          product_image?: string | null
+          product_name?: string
           quantity?: number
         }
         Relationships: [
