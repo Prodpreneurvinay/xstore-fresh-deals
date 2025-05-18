@@ -1,2 +1,6 @@
-/admin/*  /admin/index.html  200
-/*  https://xstoreindia.shop/:splat  301!
+# Redirect non-www to www only once
+https://xstoreindia.shop/* https://www.xstoreindia.shop/:splat 301!
+
+# Handle SPA routing and admin panel
+/admin/* /admin/index.html 200
+/* /index.html 200
