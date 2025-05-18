@@ -1,6 +1,8 @@
-# Redirect non-www to www only once
-https://xstoreindia.shop/* https://www.xstoreindia.shop/:splat 301!
+# Redirect www to non-www
+https://www.xstoreindia.shop/* https://xstoreindia.shop/:splat 301!
 
-# Handle SPA routing and admin panel
+# Keep admin panel working
 /admin/* /admin/index.html 200
+
+# Handle SPA routing for main site
 /* /index.html 200
