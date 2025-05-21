@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async';
 import React, { useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -17,8 +18,21 @@ const Index = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
-  return <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
+  return (
+  <>
+    <Helmet>
+      <title>Xstore India – Save Big on Near-Expiry Stock</title>
+      <meta name="description" content="Get up to 95% off on near-expiry stock, fresh produce, and more – exclusively for local shopkeepers." />
+      <meta name="keywords" content="Xstore, near-expiry, discount stock, mandi, groceries, wholesale, local shopkeepers, India" />
+      <meta property="og:title" content="Xstore India – Save Big on Near-Expiry Stock" />
+      <meta property="og:description" content="Get up to 95% off on near-expiry stock, fresh produce, and more – exclusively for local shopkeepers." />
+      <meta property="og:image" content="https://xstoreindia.store/og-image.jpg" />
+      <meta property="og:url" content="https://xstoreindia.store" />
+      <meta name="twitter:card" content="summary_large_image" />
+    </Helmet>
+    <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
       {/* Hero Section */}
+      
       <section className="bg-gradient-to-br from-xstore-green-light to-xstore-green py-16 text-white">
         <div className="container-custom">
           <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-12">
