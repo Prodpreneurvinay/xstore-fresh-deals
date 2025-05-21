@@ -45,7 +45,7 @@ const Contact = () => {
         <meta name="description"
     content="Contact Xstore India if you have expiring inventory – we’ll help you clear it fast. Retailers can get up to 95% off on FMCG products. Hotels and restaurants can also reach out to receive fresh fruits, vegetables, and frozen items at the lowest rates with free same-day doorstep delivery." />
         <link rel="canonical" href="https://xstoreindia.shop/contact" />
-      </Helmet>
+      </Helmet> ;
     
   <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
       <div className="container-custom py-12">
