@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async';
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useCart } from '@/context/CartContext';
@@ -39,7 +40,14 @@ const Contact = () => {
       setIsSubmitting(false);
     }, 1000);
   };
-  return <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
+  return Helmet>
+        <title>About Us – Xstore India</title>
+        <meta name="description"
+    content="Contact Xstore India if you have expiring inventory – we’ll help you clear it fast. Retailers can get up to 95% off on FMCG products. Hotels and restaurants can also reach out to receive fresh fruits, vegetables, and frozen items at the lowest rates with free same-day doorstep delivery." />
+        <link rel="canonical" href="https://xstoreindia.shop/contact" />
+      </Helmet>
+    
+  <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
       <div className="container-custom py-12">
         <h1 className="text-3xl font-bold mb-8">Contact Us</h1>
         
