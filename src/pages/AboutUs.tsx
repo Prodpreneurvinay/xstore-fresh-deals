@@ -1,4 +1,3 @@
-import { Helmet } from 'react-helmet-async';
 import React, { useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useCart } from '@/context/CartContext';
@@ -15,13 +14,7 @@ const AboutUs = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
-  return Helmet>
-        <title>About Us – Xstore India</title>
-        <meta name="description" content="Learn about our mission to deliver fresh mandi produce across India." />
-        <link rel="canonical" href="https://xstoreindia.shop/about-us" />
-      </Helmet>
-    
-  <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
+  return <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
       <div className="container-custom py-12">
         <h1 className="text-3xl font-bold mb-8">About Xstore</h1>
         

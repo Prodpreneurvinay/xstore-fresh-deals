@@ -1,4 +1,4 @@
-import { Helmet } from 'react-helmet-async';
+
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import ProductCard, { Product } from '@/components/ProductCard';
@@ -89,13 +89,7 @@ const XstoreFresh = () => {
   if (!currentCity) {
     return null;
   }
-  return Helmet>
-        <title>xstore fresh – Xstore India</title>
-        <meta name="description" content=" In xstore fresh We source the freshest fruits, vegetables, and ingredients for your restaurant or hotel directly from local mandis." />
-        <link rel="canonical" href="https://xstoreindia.shop/xstore-fresh" />
-      </Helmet>
-    
-  <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
+  return <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
       {/* Hero Banner */}
       <div className="bg-gradient-to-r from-xstore-green to-xstore-green-light text-white py-12">
         <div className="container-custom">
