@@ -30,7 +30,7 @@ const Index = () => {
       <meta property="og:image" content="https://xstoreindia.store/og-image.jpg" />
       <meta property="og:url" content="https://xstoreindia.store" />
       <meta name="twitter:card" content="summary_large_image" />
-    </Helmet>
+    </Helmet> ;
     <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
       {/* Hero Section */}
       
