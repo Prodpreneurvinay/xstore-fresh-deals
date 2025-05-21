@@ -21,7 +21,8 @@ const Index = () => {
   return (
   <>
     <Helmet>
-      <link rel="canonical" href="https://xstoreindia.shop"
+      <link rel="canonical" href="https://xstoreindia.shop" />
+
       <title>Xstore India – Save Big on Near-Expiry Stock</title>
       <meta name="description" content="Get up to 95% off on near-expiry stock, fresh produce, and more – exclusively for local shopkeepers." />
       <meta name="keywords" content="Xstore, near-expiry, discount stock, mandi, groceries, wholesale, local shopkeepers, India" />
