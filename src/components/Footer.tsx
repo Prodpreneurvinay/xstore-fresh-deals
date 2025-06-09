@@ -1,7 +1,10 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
+
 const Footer = () => {
-  return <footer className="bg-gray-800 text-white pt-12 pb-6">
+  return (
+    <footer className="bg-gray-800 text-white pt-12 pb-6">
       <div className="container-custom">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           <div>
@@ -28,7 +31,7 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/products" className="text-gray-300 hover:text-white transition-colors duration-200">
+                <Link to="/select-city?service=retail" className="text-gray-300 hover:text-white transition-colors duration-200">
                   Products
                 </Link>
               </li>
@@ -44,12 +47,12 @@ const Footer = () => {
             <h3 className="text-lg font-semibold mb-4">Services</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/select-city?product=retail" className="text-gray-300 hover:text-white transition-colors duration-200">
+                <Link to="/select-city?service=retail" className="text-gray-300 hover:text-white transition-colors duration-200">
                   Xstore Retail
                 </Link>
               </li>
               <li>
-                <Link to="/select-city?product=fresh" className="text-gray-300 hover:text-white transition-colors duration-200">
+                <Link to="/select-city?service=fresh" className="text-gray-300 hover:text-white transition-colors duration-200">
                   Xstore Fresh
                 </Link>
               </li>
@@ -88,6 +91,8 @@ const Footer = () => {
           <p>© {new Date().getFullYear()} Xstore. All rights reserved.</p>
         </div>
       </div>
-    </footer>;
+    </footer>
+  );
 };
+
 export default Footer;

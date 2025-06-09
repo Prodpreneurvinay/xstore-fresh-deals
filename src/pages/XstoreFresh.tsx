@@ -15,18 +15,12 @@ import CategoryCard from '@/components/CategoryCard';
 
 // Categories that are considered "fresh"
 const FRESH_CATEGORIES = ['Vegetables', 'Fruits', 'Dairy', 'Meat', 'Frozen'];
+
 const XstoreFresh = () => {
-  const {
-    cart,
-    addToCart
-  } = useCart();
-  const {
-    currentCity
-  } = useCity();
+  const { cart, addToCart } = useCart();
+  const { currentCity } = useCity();
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Products');
   const [loading, setLoading] = useState(true);
@@ -41,7 +35,7 @@ const XstoreFresh = () => {
         description: "Please select your city to see available fresh products",
         variant: "default"
       });
-      navigate('/select-city');
+      navigate('/select-city?service=fresh');
     }
   }, [currentCity, navigate, toast]);
 
@@ -54,7 +48,9 @@ const XstoreFresh = () => {
         const fetchedProducts = await getProducts();
 
         // Filter only fresh products
-        const freshProducts = fetchedProducts.filter(product => FRESH_CATEGORIES.includes(product.category));
+        const freshProducts = fetchedProducts.filter(product => 
+          FRESH_CATEGORIES.includes(product.category)
+        );
         setProducts(freshProducts);
 
         // Extract unique categories
@@ -75,7 +71,16 @@ const XstoreFresh = () => {
   }, [currentCity, toast]);
 
   // Filter products based on search, category, and city
-  const filteredProducts = products.filter(product => product.name.toLowerCase().includes(searchTerm.toLowerCase())).filter(product => selectedCategory === 'All Products' || product.category === selectedCategory).filter(product => !currentCity || !product.cities || product.cities.includes(currentCity));
+  const filteredProducts = products
+    .filter(product => 
+      product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .filter(product => 
+      selectedCategory === 'All Products' || product.category === selectedCategory
+    )
+    .filter(product => 
+      !currentCity || !product.cities || product.cities.includes(currentCity)
+    );
 
   // Get hot deals products
   const hotDealsProducts = filteredProducts.filter(product => product.isHotDeal);
@@ -89,7 +94,9 @@ const XstoreFresh = () => {
   if (!currentCity) {
     return null;
   }
-  return <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
+
+  return (
+    <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
       {/* Hero Banner */}
       <div className="bg-gradient-to-r from-xstore-green to-xstore-green-light text-white py-12">
         <div className="container-custom">
@@ -107,7 +114,11 @@ const XstoreFresh = () => {
               </p>
             </div>
             <div className="md:w-1/2 md:pl-12">
-              <img alt="Fresh produce" className="rounded-lg shadow-lg" src="https://static.vecteezy.com/system/resources/thumbnails/047/985/911/small_2x/high-quality-fresh-fruits-and-vegetables-pattern-texture-background-photo.JPG" />
+              <img 
+                alt="Fresh produce" 
+                className="rounded-lg shadow-lg" 
+                src="https://static.vecteezy.com/system/resources/thumbnails/047/985/911/small_2x/high-quality-fresh-fruits-and-vegetables-pattern-texture-background-photo.JPG" 
+              />
             </div>
           </div>
         </div>
@@ -122,11 +133,13 @@ const XstoreFresh = () => {
           </div>
           
           {/* Cart Summary Button - Only visible if there are items */}
-          {cart.itemCount > 0 && <Button onClick={handleViewCart} className="flex items-center gap-2 bg-xstore-green">
+          {cart.itemCount > 0 && (
+            <Button onClick={handleViewCart} className="flex items-center gap-2 bg-xstore-green">
               <ShoppingCart size={18} />
               <span>View Cart ({cart.itemCount})</span>
               <span className="font-bold">₹{cart.total.toFixed(2)}</span>
-            </Button>}
+            </Button>
+          )}
         </div>
         
         {/* Category Visual Bar */}
@@ -134,40 +147,88 @@ const XstoreFresh = () => {
           <h2 className="text-xl font-semibold mb-4">Categories</h2>
           <ScrollArea className="whitespace-nowrap pb-4">
             <div className="flex gap-4">
-              {categories.map(category => <CategoryCard key={category} category={category} isSelected={selectedCategory === category} onClick={() => setSelectedCategory(category)} />)}
+              {categories.map(category => (
+                <CategoryCard 
+                  key={category} 
+                  category={category} 
+                  isSelected={selectedCategory === category} 
+                  onClick={() => setSelectedCategory(category)} 
+                />
+              ))}
             </div>
           </ScrollArea>
         </div>
         
         {/* Hot Deals Section */}
-        {hotDealsProducts.length > 0 && <div className="mb-8">
+        {hotDealsProducts.length > 0 && (
+          <div className="mb-8">
             <div className="flex items-center mb-4">
               <TrendingUp size={24} className="text-xstore-orange mr-2" />
               <h2 className="text-2xl font-semibold">Hot Deals</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {hotDealsProducts.map(product => <ProductCard key={product.id} product={product} onAddToCart={addToCart} />)}
+              {hotDealsProducts.map(product => (
+                <ProductCard 
+                  key={product.id} 
+                  product={product} 
+                  onAddToCart={addToCart} 
+                />
+              ))}
             </div>
-          </div>}
+          </div>
+        )}
         
         {/* Search */}
         <div className="relative flex-grow mb-6">
           <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <Input type="search" placeholder="Search fresh products..." className="pl-10" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+          <Input 
+            type="search" 
+            placeholder="Search fresh products..." 
+            className="pl-10" 
+            value={searchTerm} 
+            onChange={(e) => setSearchTerm(e.target.value)} 
+          />
         </div>
         
         {/* All Products Grid */}
-        <h2 className="text-2xl font-semibold mb-4">{selectedCategory === 'All Products' ? 'All Products' : selectedCategory}</h2>
+        <h2 className="text-2xl font-semibold mb-4">
+          {selectedCategory === 'All Products' ? 'All Products' : selectedCategory}
+        </h2>
         
-        {loading ? <div className="flex justify-center items-center py-20">
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
             <Loader2 className="h-12 w-12 animate-spin text-xstore-green" />
-          </div> : filteredProducts.length === 0 ? <div className="text-center py-16">
-            <h3 className="text-xl font-medium text-gray-600">No products found</h3>
-            <p className="mt-2 text-gray-500">Try adjusting your search or filters</p>
-          </div> : <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredProducts.map(product => <ProductCard key={product.id} product={product} onAddToCart={addToCart} />)}
-          </div>}
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="max-w-md mx-auto">
+              <Leaf className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-medium text-gray-600 mb-2">Sorry, all products are out of stock currently</h3>
+              <p className="text-gray-500 mb-6">
+                We're working hard to restock our fresh produce. Please try again tomorrow for the latest selection.
+              </p>
+              <Button 
+                onClick={() => navigate('/select-city?service=fresh')} 
+                className="bg-xstore-green hover:bg-xstore-green-dark"
+              >
+                Try Different City
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {filteredProducts.map(product => (
+              <ProductCard 
+                key={product.id} 
+                product={product} 
+                onAddToCart={addToCart} 
+              />
+            ))}
+          </div>
+        )}
       </div>
-    </Layout>;
+    </Layout>
+  );
 };
+
 export default XstoreFresh;

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from "@/components/Layout";
 import { useCity } from '@/context/CityContext';
 import { MapPin, ChevronRight, Loader2 } from 'lucide-react';
@@ -10,20 +10,43 @@ import { toast } from '@/components/ui/use-toast';
 const SelectCity = () => {
   const { setCity, availableCities, isLoading } = useCity();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const serviceType = searchParams.get('service'); // 'fresh' or 'retail'
 
   const handleCitySelect = (city: string) => {
     setCity(city);
+    
+    // Determine where to redirect based on service type
+    const redirectPath = serviceType === 'fresh' ? '/xstore-fresh' : '/products';
+    const serviceName = serviceType === 'fresh' ? 'Xstore Fresh' : 'Xstore Retail';
+    
     toast({
       title: "City Selected",
-      description: `You've selected ${city}. Showing products available in your area.`
+      description: `You've selected ${city}. Showing ${serviceName} products available in your area.`
     });
-    navigate('/products');
+    
+    navigate(redirectPath);
+  };
+
+  const getPageTitle = () => {
+    if (serviceType === 'fresh') {
+      return 'Select Your City for Fresh Produce';
+    }
+    return 'Select Your City';
+  };
+
+  const getPageDescription = () => {
+    if (serviceType === 'fresh') {
+      return 'Choose your city to see fresh fruits, vegetables, and daily produce available for delivery.';
+    }
+    return 'Choose your city to see products available in your area.';
   };
 
   return (
     <Layout>
       <div className="max-w-lg mx-auto p-4">
-        <h1 className="text-2xl font-semibold mb-6 text-center">Select Your City</h1>
+        <h1 className="text-2xl font-semibold mb-2 text-center">{getPageTitle()}</h1>
+        <p className="text-gray-600 text-center mb-6">{getPageDescription()}</p>
         
         {isLoading ? (
           <div className="flex justify-center items-center p-8">

@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -5,19 +6,18 @@ import { Link } from 'react-router-dom';
 import { ShoppingBag, Salad, ArrowRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useCity } from '@/context/CityContext';
+
 const Index = () => {
-  const {
-    cart
-  } = useCart();
-  const {
-    currentCity
-  } = useCity();
+  const { cart } = useCart();
+  const { currentCity } = useCity();
 
   // Fix mobile UX issue: auto-scroll to top on page load
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
-  return <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
+
+  return (
+    <Layout cartItemCount={cart.itemCount} currentCity={currentCity}>
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-xstore-green-light to-xstore-green py-16 text-white">
         <div className="container-custom">
@@ -29,7 +29,7 @@ const Index = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button asChild size="lg" className="bg-white text-xstore-green hover:bg-gray-100 border-2 border-white shadow-lg">
-                  <Link to="/products">Browse Products</Link>
+                  <Link to="/select-city?service=retail">Browse Products</Link>
                 </Button>
               </div>
             </div>
@@ -62,7 +62,7 @@ const Index = () => {
                 </p>
                 <div className="flex items-center">
                   <Button asChild className="bg-xstore-orange hover:bg-xstore-orange-dark shadow-md">
-                    <Link to="/select-city">
+                    <Link to="/select-city?service=retail">
                       Explore Products
                       <ArrowRight size={16} className="ml-2" />
                     </Link>
@@ -87,7 +87,7 @@ const Index = () => {
                 </p>
                 <div className="flex items-center">
                   <Button asChild className="shadow-md">
-                    <Link to="/select-city">
+                    <Link to="/select-city?service=fresh">
                       Fresh Produce
                       <ArrowRight size={16} className="ml-2" />
                     </Link>
@@ -152,10 +152,12 @@ const Index = () => {
             Join hundreds of businesses already using Xstore to optimize their supply chain
           </p>
           <Button asChild size="lg" className="bg-white text-xstore-orange hover:bg-gray-100 shadow-lg">
-            <Link to="/select-city">Select Your City</Link>
+            <Link to="/select-city?service=retail">Select Your City</Link>
           </Button>
         </div>
       </section>
-    </Layout>;
+    </Layout>
+  );
 };
+
 export default Index;
