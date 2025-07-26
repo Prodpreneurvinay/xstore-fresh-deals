@@ -31,8 +31,9 @@ import {
 import { getProducts, saveProduct, deleteProduct, getCities } from '@/services/productService';
 import { getOrders, updateOrderStatus, Order } from '@/services/orderService';
 import CitiesTab from '@/components/CitiesTab';
-import AdminAuth from '@/components/AdminAuth';
+import AdminAuth from '@/pages/AdminAuth';
 import OrdersTable from '@/components/OrdersTable';
+import { adminSignOut } from '@/services/adminService';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -184,13 +185,9 @@ const AdminDashboard = () => {
     });
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('xstore_admin_auth');
+  const handleLogout = async () => {
+    await adminSignOut();
     setIsAuthenticated(false);
-    toast({
-      title: "Logged Out",
-      description: "You have been logged out successfully",
-    });
   };
   
   return (
