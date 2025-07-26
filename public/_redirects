@@ -1,8 +1,5 @@
 # Redirect www to non-www
 https://www.xstoreindia.shop/* https://xstoreindia.shop/:splat 301!
 
-# Keep admin panel working
-/admin/* /admin/index.html 200
-
-# Handle SPA routing for main site
+# Handle SPA routing - all routes should serve index.html
 /* /index.html 200
