@@ -113,6 +113,7 @@ export type Database = {
           city: string
           created_at: string | null
           id: string
+          landmark: string | null
           phone_number: string
           shop_name: string
           status: string | null
@@ -124,6 +125,7 @@ export type Database = {
           city: string
           created_at?: string | null
           id?: string
+          landmark?: string | null
           phone_number: string
           shop_name: string
           status?: string | null
@@ -135,6 +137,7 @@ export type Database = {
           city?: string
           created_at?: string | null
           id?: string
+          landmark?: string | null
           phone_number?: string
           shop_name?: string
           status?: string | null
@@ -223,6 +226,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_nearby_shops_for_products: {
+        Args: { user_city: string; product_ids: string[]; days_back?: number }
+        Returns: {
+          product_id: string
+          product_name: string
+          shop_name: string
+          shop_address: string
+          shop_city: string
+          landmark: string
+          order_date: string
+        }[]
+      }
       is_admin: {
         Args: { user_id?: string }
         Returns: boolean
