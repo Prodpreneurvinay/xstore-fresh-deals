@@ -8,6 +8,7 @@ export interface Order {
   shop_name: string;
   phone_number: string;
   address: string;
+  landmark?: string;
   city: string;
   total: number;
   status: string;
@@ -37,6 +38,7 @@ export const createOrder = async (orderData: {
   shop_name: string;
   phone_number: string;
   address: string;
+  landmark: string;
   city: string;
   total: number;
   items: CartItem[];
@@ -49,6 +51,7 @@ export const createOrder = async (orderData: {
         shop_name: orderData.shop_name,
         phone_number: orderData.phone_number,
         address: orderData.address,
+        landmark: orderData.landmark,
         city: orderData.city,
         total: orderData.total
       })

@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import CartItem from '@/components/CartItem';
+import NearbyShopsModal from '@/components/NearbyShopsModal';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, AlertTriangle, ArrowRight } from 'lucide-react';
+import { ShoppingCart, AlertTriangle, ArrowRight, MapPin } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useCity } from '@/context/CityContext';
 
@@ -14,6 +15,7 @@ const Cart = () => {
   const { cart, removeFromCart, updateQuantity } = useCart();
   const { currentCity } = useCity();
   const navigate = useNavigate();
+  const [showNearbyShops, setShowNearbyShops] = useState(false);
   
   // Check if cart meets minimum order value
   const isCartValid = cart.total >= MIN_ORDER_VALUE;
@@ -108,8 +110,22 @@ const Cart = () => {
                     <AlertTriangle size={18} className="mr-2 mt-0.5 flex-shrink-0" />
                     <p className="text-sm">
                       Minimum order value is ₹{MIN_ORDER_VALUE}. Please add ₹{(MIN_ORDER_VALUE - cart.total).toFixed(2)} more to proceed.
+                      <br />
+                      <strong>Badly want these items only?</strong> Use this feature 'Recently Bought by These Shops'
                     </p>
                   </div>
+                )}
+
+                {/* Recently Bought by These Shops button */}
+                {!isCartValid && (
+                  <Button
+                    onClick={() => setShowNearbyShops(true)}
+                    variant="outline"
+                    className="w-full mb-4 border-blue-500 text-blue-600 hover:bg-blue-50"
+                  >
+                    <MapPin size={16} className="mr-2" />
+                    Recently Bought by These Shops Near You
+                  </Button>
                 )}
                 
                 <Button
@@ -129,6 +145,11 @@ const Cart = () => {
           </div>
         )}
       </div>
+      
+      <NearbyShopsModal 
+        isOpen={showNearbyShops} 
+        onClose={() => setShowNearbyShops(false)} 
+      />
     </Layout>
   );
 };

@@ -22,6 +22,7 @@ const Checkout = () => {
     shopName: '',
     phoneNumber: '',
     address: '',
+    landmark: '',
     isExistingCustomer: false,
     existingPhoneNumber: '',
   });
@@ -92,10 +93,10 @@ const Checkout = () => {
     e.preventDefault();
     
     // Validation
-    if (!formData.shopName || !formData.phoneNumber || !formData.address) {
+    if (!formData.shopName || !formData.phoneNumber || !formData.address || !formData.landmark) {
       toast({
         title: "Missing information",
-        description: "Please fill all required fields.",
+        description: "Please fill all required fields including landmark.",
         variant: "destructive"
       });
       return;
@@ -109,6 +110,7 @@ const Checkout = () => {
         shop_name: formData.shopName,
         phone_number: formData.phoneNumber,
         address: formData.address,
+        landmark: formData.landmark,
         city: currentCity,
         total: cart.total,
         items: cart.items
@@ -246,6 +248,22 @@ const Checkout = () => {
                     required
                     disabled={formData.isExistingCustomer && isExistingPhoneVerified}
                     rows={3}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="landmark" className="block text-sm font-medium mb-1">
+                    Nearby Landmark*
+                  </label>
+                  <Input
+                    type="text"
+                    id="landmark"
+                    name="landmark"
+                    placeholder="e.g., Near Post Office, Opposite SBI Bank"
+                    value={formData.landmark}
+                    onChange={handleInputChange}
+                    required
+                    disabled={formData.isExistingCustomer && isExistingPhoneVerified}
                   />
                 </div>
                 
