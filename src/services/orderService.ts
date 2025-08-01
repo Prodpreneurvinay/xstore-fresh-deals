@@ -1,6 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { CartItem } from "@/context/CartContext";
 
 export interface Order {
@@ -24,16 +23,16 @@ export interface OrderItem {
   quantity: number;
   price: number;
   created_at: string;
-  product_name: string;  // Now required, not optional
+  product_name: string;
   product_image?: string;
-  product_category?: string;  // Added field for product category
+  product_category?: string;
   product?: {
     name: string;
     image_url: string;
   };
 }
 
-// Create a new order
+// Create a new order - simplified version
 export const createOrder = async (orderData: {
   shop_name: string;
   phone_number: string;
@@ -44,73 +43,91 @@ export const createOrder = async (orderData: {
   items: CartItem[];
 }): Promise<Order | null> => {
   try {
-    // Debug log the order data
-    console.log("Creating order with data:", {
+    console.log("Starting order creation with data:", orderData);
+
+    // Validate required fields
+    if (!orderData.shop_name || !orderData.phone_number || !orderData.address || !orderData.city) {
+      throw new Error("Missing required order information");
+    }
+
+    if (!orderData.items || orderData.items.length === 0) {
+      throw new Error("No items in order");
+    }
+
+    // Insert the order first
+    const orderInsert = {
       shop_name: orderData.shop_name,
       phone_number: orderData.phone_number,
       address: orderData.address,
-      landmark: orderData.landmark,
+      landmark: orderData.landmark || "",
       city: orderData.city,
-      total: orderData.total
-    });
+      total: Number(orderData.total),
+      status: 'pending'
+    };
 
-    // Insert the order
+    console.log("Inserting order:", orderInsert);
+
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .insert({
-        shop_name: orderData.shop_name,
-        phone_number: orderData.phone_number,
-        address: orderData.address,
-        landmark: orderData.landmark,
-        city: orderData.city,
-        total: orderData.total
-      })
+      .insert(orderInsert)
       .select()
       .single();
 
     if (orderError) {
-      console.error("Error creating order:", orderError);
-      toast({
-        title: "Failed to create order",
-        description: orderError.message,
-        variant: "destructive"
-      });
-      return null;
+      console.error("Order creation error:", orderError);
+      throw orderError;
     }
 
-    // Insert order items with more product details
+    if (!order) {
+      throw new Error("No order returned from database");
+    }
+
+    console.log("Order created successfully:", order);
+
+    // Insert order items
     const orderItems = orderData.items.map(item => ({
       order_id: order.id,
       product_id: item.product.id,
-      quantity: item.quantity,
-      price: item.product.sellingPrice,
-      product_name: item.product.name,  // Store product name
-      product_image: item.product.imageUrl || "",  // Store image URL 
-      product_category: item.product.category || ""  // Store category
+      quantity: Number(item.quantity),
+      price: Number(item.product.sellingPrice),
+      product_name: item.product.name,
+      product_image: item.product.imageUrl || "",
+      product_category: item.product.category || ""
     }));
+
+    console.log("Inserting order items:", orderItems);
 
     const { error: itemsError } = await supabase
       .from('order_items')
       .insert(orderItems);
 
     if (itemsError) {
-      console.error("Error creating order items:", itemsError);
-      toast({
-        title: "Failed to create order items",
-        description: itemsError.message,
-        variant: "destructive"
-      });
-      return null;
+      console.error("Order items creation error:", itemsError);
+      // Try to delete the order if items failed
+      await supabase.from('orders').delete().eq('id', order.id);
+      throw itemsError;
     }
 
-    return order;
-  } catch (error) {
-    console.error("Error in createOrder:", error);
+    console.log("Order and items created successfully");
+
     toast({
-      title: "An unexpected error occurred",
-      description: "Could not create your order",
+      title: "Order placed successfully",
+      description: "Your order has been received and will be processed soon.",
+    });
+
+    return order;
+
+  } catch (error: any) {
+    console.error("Error in createOrder:", error);
+    
+    const errorMessage = error?.message || "Unknown error occurred";
+    
+    toast({
+      title: "Order failed",
+      description: errorMessage,
       variant: "destructive"
     });
+    
     return null;
   }
 };
@@ -125,21 +142,16 @@ export const getOrders = async (): Promise<Order[]> => {
 
     if (ordersError) {
       console.error("Error fetching orders:", ordersError);
-      toast({
-        title: "Failed to fetch orders",
-        description: ordersError.message,
-        variant: "destructive"
-      });
+      return [];
+    }
+
+    if (!orders || orders.length === 0) {
       return [];
     }
 
     // Get order items for all orders
     const orderIds = orders.map(order => order.id);
     
-    if (orderIds.length === 0) {
-      return orders;
-    }
-
     const { data: orderItems, error: itemsError } = await supabase
       .from('order_items')
       .select(`
@@ -160,11 +172,9 @@ export const getOrders = async (): Promise<Order[]> => {
       return orders;
     }
 
-    console.log("Order items fetched:", orderItems);
-
     // Add items to their respective orders
     const ordersWithItems = orders.map(order => {
-      const items = orderItems.filter(item => item.order_id === order.id);
+      const items = orderItems?.filter(item => item.order_id === order.id) || [];
       return {
         ...order,
         items
@@ -174,11 +184,6 @@ export const getOrders = async (): Promise<Order[]> => {
     return ordersWithItems;
   } catch (error) {
     console.error("Error in getOrders:", error);
-    toast({
-      title: "An unexpected error occurred",
-      description: "Could not fetch orders",
-      variant: "destructive"
-    });
     return [];
   }
 };
