@@ -44,6 +44,16 @@ export const createOrder = async (orderData: {
   items: CartItem[];
 }): Promise<Order | null> => {
   try {
+    // Debug log the order data
+    console.log("Creating order with data:", {
+      shop_name: orderData.shop_name,
+      phone_number: orderData.phone_number,
+      address: orderData.address,
+      landmark: orderData.landmark,
+      city: orderData.city,
+      total: orderData.total
+    });
+
     // Insert the order
     const { data: order, error: orderError } = await supabase
       .from('orders')
