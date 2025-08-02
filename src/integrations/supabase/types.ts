@@ -242,6 +242,10 @@ export type Database = {
         Args: { user_id?: string }
         Returns: boolean
       }
+      promote_user_to_admin: {
+        Args: { target_email: string; target_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
