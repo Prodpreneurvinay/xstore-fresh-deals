@@ -19,13 +19,23 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSigningIn, setIsSigningIn] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [isSigningUp, setIsSigningUp] = useState(false);
+  const [email, setEmail] = useState('admin@xstoreindia.shop');
+  const [password, setPassword] = useState('Admin123!@#');
+  const [isSetupMode, setIsSetupMode] = useState(false);
   const navigate = useNavigate();
 
   // Check authentication state and admin status
   useEffect(() => {
     const initializeAuth = async () => {
+      // Check if any admin users exist
+      const { data: existingAdmins } = await supabase
+        .from('admin_users')
+        .select('*')
+        .limit(1);
+      
+      setIsSetupMode(!existingAdmins || existingAdmins.length === 0);
+
       // Set up auth state listener
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         async (event, session) => {
@@ -42,13 +52,36 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
             
             if (adminUser && !error) {
               onAuthSuccess();
-            } else {
+            } else if (!isSetupMode) {
               toast({
                 title: "Access Denied",
                 description: "You don't have admin privileges",
                 variant: "destructive"
               });
               await supabase.auth.signOut();
+            } else {
+              // First time setup - automatically make this user an admin
+              const { error: insertError } = await supabase
+                .from('admin_users')
+                .insert({
+                  user_id: session.user.id,
+                  email: session.user.email || '',
+                  role: 'admin'
+                });
+              
+              if (!insertError) {
+                toast({
+                  title: "Admin Account Created",
+                  description: "You are now the admin of this system",
+                });
+                onAuthSuccess();
+              } else {
+                toast({
+                  title: "Setup Error",
+                  description: "Failed to create admin account",
+                  variant: "destructive"
+                });
+              }
             }
           }
           setIsLoading(false);
@@ -69,6 +102,19 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
         
         if (adminUser && !error) {
           onAuthSuccess();
+        } else if (isSetupMode) {
+          // Auto-promote during setup
+          const { error: insertError } = await supabase
+            .from('admin_users')
+            .insert({
+              user_id: session.user.id,
+              email: session.user.email || '',
+              role: 'admin'
+            });
+          
+          if (!insertError) {
+            onAuthSuccess();
+          }
         } else {
           await supabase.auth.signOut();
         }
@@ -79,7 +125,7 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
     };
 
     initializeAuth();
-  }, [onAuthSuccess]);
+  }, [onAuthSuccess, isSetupMode]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,6 +161,42 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
     }
   };
 
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSigningUp(true);
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/admin`
+        }
+      });
+
+      if (error) {
+        toast({
+          title: "Sign Up Failed",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else if (data.user) {
+        toast({
+          title: "Account Created Successfully",
+          description: isSetupMode ? "Setting up admin privileges..." : "Please check your email to verify your account",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "An error occurred",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSigningUp(false);
+    }
+  };
+
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -143,45 +225,99 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4 mx-auto">
             <Lock className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Admin Access</CardTitle>
+          <CardTitle className="text-2xl">
+            {isSetupMode ? "Admin Setup" : "Admin Access"}
+          </CardTitle>
           <CardDescription>
-            Secure authentication required for admin panel
+            {isSetupMode 
+              ? "Create the first admin account to secure your system" 
+              : "Secure authentication required for admin panel"
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSignIn} className="space-y-4">
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="admin@example.com"
-              />
-            </div>
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="Enter your password"
-              />
-            </div>
-            <Button 
-              type="submit" 
-              className="w-full"
-              disabled={isSigningIn}
-            >
-              {isSigningIn ? "Signing In..." : "Admin Sign In"}
-            </Button>
-          </form>
+          <Tabs defaultValue="signin" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="signin">Sign In</TabsTrigger>
+              <TabsTrigger value="signup">
+                {isSetupMode ? "Setup Admin" : "Sign Up"}
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="signin">
+              <form onSubmit={handleSignIn} className="space-y-4">
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="admin@xstoreindia.shop"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    placeholder="Enter your password"
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                  disabled={isSigningIn}
+                >
+                  {isSigningIn ? "Signing In..." : "Admin Sign In"}
+                </Button>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="signup">
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div>
+                  <Label htmlFor="signup-email">Email</Label>
+                  <Input
+                    id="signup-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="admin@xstoreindia.shop"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="signup-password">Password</Label>
+                  <Input
+                    id="signup-password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    placeholder="Choose a strong password"
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                  disabled={isSigningUp}
+                >
+                  {isSigningUp ? "Creating Account..." : (isSetupMode ? "Create Admin Account" : "Create Account")}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+          
           <div className="mt-4 text-center text-sm text-muted-foreground">
-            Only authorized administrators can access this panel
+            {isSetupMode 
+              ? "This will create the first admin account for your system"
+              : "Only authorized administrators can access this panel"
+            }
           </div>
         </CardContent>
       </Card>
