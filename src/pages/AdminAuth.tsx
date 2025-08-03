@@ -224,7 +224,10 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
           email: pendingEmail,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/admin`
+            emailRedirectTo: `${window.location.origin}/admin`,
+            data: {
+              email_confirm: true // Skip email confirmation for admin accounts
+            }
           }
         });
 
