@@ -53,7 +53,7 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
               .from('admin_users')
               .select('*')
               .eq('user_id', session.user.id)
-              .single();
+              .maybeSingle();
             
             if (adminUser && !error) {
               onAuthSuccess();
@@ -103,7 +103,7 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
           .from('admin_users')
           .select('*')
           .eq('user_id', session.user.id)
-          .single();
+          .maybeSingle();
         
         if (adminUser && !error) {
           onAuthSuccess();
@@ -170,7 +170,7 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
     e.preventDefault();
     
     if (!showOTPStep) {
-      // Step 1: Send OTP to Vinay@pokopop.com
+      // Step 1: Send OTP to sativinay21@gmail.com
       setIsSendingOTP(true);
       try {
         const { data, error } = await supabase.functions.invoke('send-admin-otp', {
@@ -219,19 +219,32 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
           return;
         }
 
+        // Clear any existing auth state first
+        await supabase.auth.signOut();
+        
         // OTP verified, now create the Supabase Auth user
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: pendingEmail,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/admin`,
-            data: {
-              email_confirm: true // Skip email confirmation for admin accounts
-            }
+            emailRedirectTo: `${window.location.origin}/admin`
           }
         });
 
         if (authError) {
+          // Check if user already exists
+          if (authError.message.includes('already registered')) {
+            toast({
+              title: "Account Already Exists",
+              description: "Please use the Sign In tab to login",
+              variant: "destructive"
+            });
+            setShowOTPStep(false);
+            setOtpCode('');
+            setPendingEmail('');
+            return;
+          }
+          
           toast({
             title: "Failed to Create Account",
             description: authError.message,
@@ -241,34 +254,49 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
         }
 
         if (authData.user) {
-          // Add to admin_users table immediately
-          const { error: adminError } = await supabase
+          // Check if admin user entry already exists
+          const { data: existingAdmin } = await supabase
             .from('admin_users')
-            .insert({
-              user_id: authData.user.id,
-              email: pendingEmail,
-              role: 'admin'
-            });
+            .select('*')
+            .eq('email', pendingEmail)
+            .maybeSingle();
 
-          if (adminError) {
-            console.error("Error creating admin user:", adminError);
+          if (!existingAdmin) {
+            // Add to admin_users table
+            const { error: adminError } = await supabase
+              .from('admin_users')
+              .insert({
+                user_id: authData.user.id,
+                email: pendingEmail,
+                role: 'admin'
+              });
+
+            if (adminError) {
+              console.error("Error creating admin user:", adminError);
+              toast({
+                title: "Admin Setup Error",
+                description: "Account created but admin privileges not assigned. Please contact support.",
+                variant: "destructive"
+              });
+            }
           }
 
           toast({
-            title: "Admin Account Created Successfully",
+            title: "Admin Account Ready",
             description: "You can now sign in with your credentials",
           });
           
-          // Reset form and go back to sign in
+          // Reset form and switch to sign in
           setShowOTPStep(false);
           setOtpCode('');
           setPendingEmail('');
           setEmail(pendingEmail);
         }
-      } catch (error) {
+      } catch (error: any) {
+        console.error("Signup error:", error);
         toast({
           title: "An error occurred",
-          description: "Please try again",
+          description: error.message || "Please try again",
           variant: "destructive"
         });
       } finally {
