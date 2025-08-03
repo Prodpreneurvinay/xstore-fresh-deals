@@ -20,9 +20,14 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
+  const [isSendingOTP, setIsSendingOTP] = useState(false);
+  const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
   const [email, setEmail] = useState('admin@xstoreindia.shop');
   const [password, setPassword] = useState('Admin123!@#');
+  const [otpCode, setOtpCode] = useState('');
   const [isSetupMode, setIsSetupMode] = useState(false);
+  const [showOTPStep, setShowOTPStep] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState('');
   const navigate = useNavigate();
 
   // Check authentication state and admin status
@@ -163,38 +168,116 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSigningUp(true);
+    
+    if (!showOTPStep) {
+      // Step 1: Send OTP to Vinay@pokopop.com
+      setIsSendingOTP(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('send-admin-otp', {
+          body: { requestedEmail: email }
+        });
 
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/admin`
+        if (error) {
+          toast({
+            title: "Failed to Send OTP",
+            description: error.message,
+            variant: "destructive"
+          });
+          return;
         }
-      });
 
-      if (error) {
+        setPendingEmail(email);
+        setShowOTPStep(true);
         toast({
-          title: "Sign Up Failed",
-          description: error.message,
+          title: "OTP Sent",
+          description: "Verification code sent to admin for approval",
+        });
+      } catch (error) {
+        toast({
+          title: "An error occurred",
+          description: "Please try again",
           variant: "destructive"
         });
-      } else if (data.user) {
-        toast({
-          title: "Account Created Successfully",
-          description: isSetupMode ? "Setting up admin privileges..." : "Please check your email to verify your account",
-        });
+      } finally {
+        setIsSendingOTP(false);
       }
-    } catch (error) {
-      toast({
-        title: "An error occurred",
-        description: "Please try again",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSigningUp(false);
+    } else {
+      // Step 2: Verify OTP and create admin account
+      setIsVerifyingOTP(true);
+      try {
+        // First verify the OTP
+        const { data: otpData, error: otpError } = await supabase.functions.invoke('verify-admin-otp', {
+          body: { email: pendingEmail, otpCode }
+        });
+
+        if (otpError || !otpData?.success) {
+          toast({
+            title: "Invalid OTP",
+            description: "Please check the OTP code and try again",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        // OTP verified, now create the Supabase Auth user
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: pendingEmail,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/admin`
+          }
+        });
+
+        if (authError) {
+          toast({
+            title: "Failed to Create Account",
+            description: authError.message,
+            variant: "destructive"
+          });
+          return;
+        }
+
+        if (authData.user) {
+          // Add to admin_users table immediately
+          const { error: adminError } = await supabase
+            .from('admin_users')
+            .insert({
+              user_id: authData.user.id,
+              email: pendingEmail,
+              role: 'admin'
+            });
+
+          if (adminError) {
+            console.error("Error creating admin user:", adminError);
+          }
+
+          toast({
+            title: "Admin Account Created Successfully",
+            description: "You can now sign in with your credentials",
+          });
+          
+          // Reset form and go back to sign in
+          setShowOTPStep(false);
+          setOtpCode('');
+          setPendingEmail('');
+          setEmail(pendingEmail);
+        }
+      } catch (error) {
+        toast({
+          title: "An error occurred",
+          description: "Please try again",
+          variant: "destructive"
+        });
+      } finally {
+        setIsVerifyingOTP(false);
+      }
     }
+  };
+
+  const resetOTPFlow = () => {
+    setShowOTPStep(false);
+    setOtpCode('');
+    setPendingEmail('');
   };
 
 
@@ -279,43 +362,95 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
             </TabsContent>
             
             <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div>
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    placeholder="admin@xstoreindia.shop"
-                  />
+              {!showOTPStep ? (
+                <form onSubmit={handleSignUp} className="space-y-4">
+                  <div>
+                    <Label htmlFor="signup-email">Admin Email</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      placeholder="Enter admin email"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="signup-password">Password</Label>
+                    <Input
+                      id="signup-password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      placeholder="Choose a strong password"
+                    />
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full"
+                    disabled={isSendingOTP}
+                  >
+                    {isSendingOTP ? "Sending OTP..." : "Request Admin Access"}
+                  </Button>
+                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-700">
+                      🔐 <strong>Security Notice:</strong> An OTP will be sent to Vinay@pokopop.com for verification
+                    </p>
+                  </div>
+                </form>
+              ) : (
+                <div className="space-y-4">
+                  <div className="text-center mb-4">
+                    <h3 className="text-lg font-semibold">OTP Verification Required</h3>
+                    <p className="text-sm text-muted-foreground">
+                      OTP has been sent to Vinay@pokopop.com for: <strong>{pendingEmail}</strong>
+                    </p>
+                  </div>
+                  <form onSubmit={handleSignUp} className="space-y-4">
+                    <div>
+                      <Label htmlFor="otp-code">Enter OTP Code</Label>
+                      <Input
+                        id="otp-code"
+                        type="text"
+                        value={otpCode}
+                        onChange={(e) => setOtpCode(e.target.value)}
+                        required
+                        placeholder="Enter 6-digit code"
+                        maxLength={6}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        type="submit" 
+                        className="flex-1"
+                        disabled={isVerifyingOTP || otpCode.length !== 6}
+                      >
+                        {isVerifyingOTP ? "Verifying..." : "Verify & Create Admin"}
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={resetOTPFlow}
+                        disabled={isVerifyingOTP}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                  <div className="mt-4 p-3 bg-amber-50 rounded-lg">
+                    <p className="text-sm text-amber-700">
+                      ⏰ OTP expires in 10 minutes. Check Vinay@pokopop.com for the verification code.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    placeholder="Choose a strong password"
-                  />
-                </div>
-                <Button 
-                  type="submit" 
-                  className="w-full"
-                  disabled={isSigningUp}
-                >
-                  {isSigningUp ? "Creating Account..." : (isSetupMode ? "Create Admin Account" : "Create Account")}
-                </Button>
-              </form>
+              )}
             </TabsContent>
           </Tabs>
           
           <div className="mt-4 text-center text-sm text-muted-foreground">
             {isSetupMode 
-              ? "This will create the first admin account for your system"
+              ? "Admin creation requires OTP verification from authorized personnel"
               : "Only authorized administrators can access this panel"
             }
           </div>
