@@ -395,7 +395,7 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
                   </Button>
                   <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                     <p className="text-sm text-blue-700">
-                      🔐 <strong>Security Notice:</strong> An OTP will be sent to Vinay@pokopop.com for verification
+                      🔐 <strong>Security Notice:</strong> An OTP will be sent to sativinay21@gmail.com for verification
                     </p>
                   </div>
                 </form>
@@ -404,7 +404,7 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
                   <div className="text-center mb-4">
                     <h3 className="text-lg font-semibold">OTP Verification Required</h3>
                     <p className="text-sm text-muted-foreground">
-                      OTP has been sent to Vinay@pokopop.com for: <strong>{pendingEmail}</strong>
+                      OTP has been sent to sativinay21@gmail.com for: <strong>{pendingEmail}</strong>
                     </p>
                   </div>
                   <form onSubmit={handleSignUp} className="space-y-4">
@@ -440,7 +440,7 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
                   </form>
                   <div className="mt-4 p-3 bg-amber-50 rounded-lg">
                     <p className="text-sm text-amber-700">
-                      ⏰ OTP expires in 10 minutes. Check Vinay@pokopop.com for the verification code.
+                      ⏰ OTP expires in 10 minutes. Check sativinay21@gmail.com for the verification code.
                     </p>
                   </div>
                 </div>

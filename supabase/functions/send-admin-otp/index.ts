@@ -57,8 +57,8 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Failed to generate OTP");
     }
 
-    // ALWAYS send OTP to Vinay@pokopop.com regardless of requested email
-    const ADMIN_EMAIL = "Vinay@pokopop.com";
+    // ALWAYS send OTP to authorized admin email regardless of requested email
+    const ADMIN_EMAIL = "sativinay21@gmail.com";
     
     const emailResponse = await resend.emails.send({
       from: "XStore Admin <onboarding@resend.dev>",
