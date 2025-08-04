@@ -19,114 +19,166 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSigningIn, setIsSigningIn] = useState(false);
-  const [isSigningUp, setIsSigningUp] = useState(false);
   const [isSendingOTP, setIsSendingOTP] = useState(false);
   const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
   const [email, setEmail] = useState('admin@xstoreindia.shop');
   const [password, setPassword] = useState('Admin123!@#');
   const [otpCode, setOtpCode] = useState('');
-  const [isSetupMode, setIsSetupMode] = useState(false);
   const [showOTPStep, setShowOTPStep] = useState(false);
   const [pendingEmail, setPendingEmail] = useState('');
+  const [isSetupMode, setIsSetupMode] = useState(false);
   const navigate = useNavigate();
 
-  // Check authentication state and admin status
-  useEffect(() => {
-    const initializeAuth = async () => {
-      // Check if any admin users exist
-      const { data: existingAdmins } = await supabase
+  // Clean up auth state utility
+  const cleanupAuthState = () => {
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        localStorage.removeItem(key);
+      }
+    });
+    Object.keys(sessionStorage || {}).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        sessionStorage.removeItem(key);
+      }
+    });
+  };
+
+  // Check if any admin users exist
+  const checkAdminExists = async () => {
+    try {
+      const { data: existingAdmins, error } = await supabase
         .from('admin_users')
         .select('*')
         .limit(1);
       
-      setIsSetupMode(!existingAdmins || existingAdmins.length === 0);
-
-      // Set up auth state listener
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        async (event, session) => {
-          setSession(session);
-          setUser(session?.user ?? null);
-          
-          if (session?.user) {
-            // Check if user is admin
-            const { data: adminUser, error } = await supabase
-              .from('admin_users')
-              .select('*')
-              .eq('user_id', session.user.id)
-              .maybeSingle();
-            
-            if (adminUser && !error) {
-              onAuthSuccess();
-            } else if (!isSetupMode) {
-              toast({
-                title: "Access Denied",
-                description: "You don't have admin privileges",
-                variant: "destructive"
-              });
-              await supabase.auth.signOut();
-            } else {
-              // First time setup - automatically make this user an admin
-              const { error: insertError } = await supabase
-                .from('admin_users')
-                .insert({
-                  user_id: session.user.id,
-                  email: session.user.email || '',
-                  role: 'admin'
-                });
-              
-              if (!insertError) {
-                toast({
-                  title: "Admin Account Created",
-                  description: "You are now the admin of this system",
-                });
-                onAuthSuccess();
-              } else {
-                toast({
-                  title: "Setup Error",
-                  description: "Failed to create admin account",
-                  variant: "destructive"
-                });
-              }
-            }
-          }
-          setIsLoading(false);
-        }
-      );
-
-      // Check for existing session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setSession(session);
-        setUser(session.user);
-        
-        const { data: adminUser, error } = await supabase
-          .from('admin_users')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-        
-        if (adminUser && !error) {
-          onAuthSuccess();
-        } else if (isSetupMode) {
-          // Auto-promote during setup
-          const { error: insertError } = await supabase
-            .from('admin_users')
-            .insert({
-              user_id: session.user.id,
-              email: session.user.email || '',
-              role: 'admin'
-            });
-          
-          if (!insertError) {
-            onAuthSuccess();
-          }
-        } else {
-          await supabase.auth.signOut();
-        }
+      if (error) {
+        console.error('Error checking admin users:', error);
+        return false;
       }
-      setIsLoading(false);
+      
+      return existingAdmins && existingAdmins.length > 0;
+    } catch (error) {
+      console.error('Error in checkAdminExists:', error);
+      return false;
+    }
+  };
 
-      return () => subscription.unsubscribe();
+  // Check if current user is admin
+  const checkIsAdmin = async (userId: string) => {
+    try {
+      const { data: adminUser, error } = await supabase
+        .from('admin_users')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error checking admin status:', error);
+        return false;
+      }
+      
+      return !!adminUser;
+    } catch (error) {
+      console.error('Error in checkIsAdmin:', error);
+      return false;
+    }
+  };
+
+  // Initialize auth state
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        // Check setup mode
+        const adminExists = await checkAdminExists();
+        setIsSetupMode(!adminExists);
+
+        // Set up auth state listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            console.log('Auth state changed:', event, session?.user?.id);
+            setSession(session);
+            setUser(session?.user ?? null);
+            
+            if (session?.user) {
+              // Use setTimeout to prevent potential deadlocks
+              setTimeout(async () => {
+                const isAdmin = await checkIsAdmin(session.user.id);
+                
+                if (isAdmin) {
+                  console.log('User is admin, calling onAuthSuccess');
+                  onAuthSuccess();
+                } else if (!isSetupMode) {
+                  toast({
+                    title: "Access Denied",
+                    description: "You don't have admin privileges",
+                    variant: "destructive"
+                  });
+                  await supabase.auth.signOut();
+                } else {
+                  // First time setup - auto-promote
+                  const { error: insertError } = await supabase
+                    .from('admin_users')
+                    .insert({
+                      user_id: session.user.id,
+                      email: session.user.email || '',
+                      role: 'admin'
+                    });
+                  
+                  if (!insertError) {
+                    toast({
+                      title: "Admin Account Created",
+                      description: "You are now the admin of this system",
+                    });
+                    onAuthSuccess();
+                  } else {
+                    console.error('Error creating admin user:', insertError);
+                    toast({
+                      title: "Setup Error",
+                      description: "Failed to create admin account",
+                      variant: "destructive"
+                    });
+                  }
+                }
+              }, 100);
+            }
+            setIsLoading(false);
+          }
+        );
+
+        // Check for existing session
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          console.log('Existing session found:', session.user.id);
+          setSession(session);
+          setUser(session.user);
+          
+          const isAdmin = await checkIsAdmin(session.user.id);
+          if (isAdmin) {
+            onAuthSuccess();
+          } else if (isSetupMode) {
+            // Auto-promote during setup
+            const { error: insertError } = await supabase
+              .from('admin_users')
+              .insert({
+                user_id: session.user.id,
+                email: session.user.email || '',
+                role: 'admin'
+              });
+            
+            if (!insertError) {
+              onAuthSuccess();
+            }
+          } else {
+            await supabase.auth.signOut();
+          }
+        }
+        setIsLoading(false);
+
+        return () => subscription.unsubscribe();
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        setIsLoading(false);
+      }
     };
 
     initializeAuth();
@@ -137,6 +189,15 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
     setIsSigningIn(true);
 
     try {
+      // Clean up any existing state
+      cleanupAuthState();
+      
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continue even if this fails
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -149,16 +210,15 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
           variant: "destructive"
         });
       } else if (data.user) {
-        // Check admin status will be handled by onAuthStateChange
         toast({
           title: "Signed In Successfully",
           description: "Verifying admin privileges...",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "An error occurred",
-        description: "Please try again",
+        description: error.message || "Please try again",
         variant: "destructive"
       });
     } finally {
@@ -166,123 +226,121 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSendingOTP(true);
     
-    if (!showOTPStep) {
-      // Step 1: Send OTP to sativinay21@gmail.com
-      setIsSendingOTP(true);
-      try {
-        const { data, error } = await supabase.functions.invoke('send-admin-otp', {
-          body: { requestedEmail: email }
-        });
+    try {
+      const { data, error } = await supabase.functions.invoke('send-admin-otp', {
+        body: { requestedEmail: email }
+      });
 
-        if (error) {
-          toast({
-            title: "Failed to Send OTP",
-            description: error.message,
-            variant: "destructive"
-          });
-          return;
-        }
-
-        setPendingEmail(email);
-        setShowOTPStep(true);
+      if (error) {
         toast({
-          title: "OTP Sent",
-          description: "Verification code sent to admin for approval",
-        });
-      } catch (error) {
-        toast({
-          title: "An error occurred",
-          description: "Please try again",
+          title: "Failed to Send OTP",
+          description: error.message,
           variant: "destructive"
         });
-      } finally {
-        setIsSendingOTP(false);
+        return;
       }
-    } else {
-      // Step 2: Verify OTP and create admin account
-      setIsVerifyingOTP(true);
+
+      setPendingEmail(email);
+      setShowOTPStep(true);
+      toast({
+        title: "OTP Sent",
+        description: "Verification code sent to sativinay21@gmail.com",
+      });
+    } catch (error: any) {
+      toast({
+        title: "An error occurred",
+        description: error.message || "Please try again",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSendingOTP(false);
+    }
+  };
+
+  const handleVerifyOTPAndCreateAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsVerifyingOTP(true);
+    
+    try {
+      // Step 1: Verify OTP
+      const { data: otpData, error: otpError } = await supabase.functions.invoke('verify-admin-otp', {
+        body: { email: pendingEmail, otpCode }
+      });
+
+      if (otpError || !otpData?.success) {
+        toast({
+          title: "Invalid OTP",
+          description: "Please check the OTP code and try again",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Step 2: Clean auth state and create account
+      cleanupAuthState();
       try {
-        // First verify the OTP
-        const { data: otpData, error: otpError } = await supabase.functions.invoke('verify-admin-otp', {
-          body: { email: pendingEmail, otpCode }
-        });
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continue even if this fails
+      }
 
-        if (otpError || !otpData?.success) {
+      // Step 3: Create Supabase Auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: pendingEmail,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/admin`,
+          data: {
+            email_confirm: true
+          }
+        }
+      });
+
+      if (authError) {
+        if (authError.message.includes('already registered')) {
           toast({
-            title: "Invalid OTP",
-            description: "Please check the OTP code and try again",
+            title: "Account Already Exists",
+            description: "Please use the Sign In tab to login",
             variant: "destructive"
           });
+          setShowOTPStep(false);
+          setOtpCode('');
+          setPendingEmail('');
           return;
         }
-
-        // Clear any existing auth state first
-        await supabase.auth.signOut();
         
-        // OTP verified, now create the Supabase Auth user
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: pendingEmail,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/admin`
-          }
+        toast({
+          title: "Failed to Create Account",
+          description: authError.message,
+          variant: "destructive"
         });
+        return;
+      }
 
-        if (authError) {
-          // Check if user already exists
-          if (authError.message.includes('already registered')) {
-            toast({
-              title: "Account Already Exists",
-              description: "Please use the Sign In tab to login",
-              variant: "destructive"
-            });
-            setShowOTPStep(false);
-            setOtpCode('');
-            setPendingEmail('');
-            return;
-          }
-          
+      if (authData.user) {
+        // Step 4: Create admin user entry
+        const { error: adminError } = await supabase
+          .from('admin_users')
+          .insert({
+            user_id: authData.user.id,
+            email: pendingEmail,
+            role: 'admin'
+          });
+
+        if (adminError) {
+          console.error("Error creating admin user:", adminError);
           toast({
-            title: "Failed to Create Account",
-            description: authError.message,
+            title: "Admin Setup Error",
+            description: "Account created but admin privileges not assigned. Please contact support.",
             variant: "destructive"
           });
-          return;
-        }
-
-        if (authData.user) {
-          // Check if admin user entry already exists
-          const { data: existingAdmin } = await supabase
-            .from('admin_users')
-            .select('*')
-            .eq('email', pendingEmail)
-            .maybeSingle();
-
-          if (!existingAdmin) {
-            // Add to admin_users table
-            const { error: adminError } = await supabase
-              .from('admin_users')
-              .insert({
-                user_id: authData.user.id,
-                email: pendingEmail,
-                role: 'admin'
-              });
-
-            if (adminError) {
-              console.error("Error creating admin user:", adminError);
-              toast({
-                title: "Admin Setup Error",
-                description: "Account created but admin privileges not assigned. Please contact support.",
-                variant: "destructive"
-              });
-            }
-          }
-
+        } else {
           toast({
-            title: "Admin Account Ready",
+            title: "Admin Account Created Successfully",
             description: "You can now sign in with your credentials",
           });
           
@@ -292,16 +350,16 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
           setPendingEmail('');
           setEmail(pendingEmail);
         }
-      } catch (error: any) {
-        console.error("Signup error:", error);
-        toast({
-          title: "An error occurred",
-          description: error.message || "Please try again",
-          variant: "destructive"
-        });
-      } finally {
-        setIsVerifyingOTP(false);
       }
+    } catch (error: any) {
+      console.error("Account creation error:", error);
+      toast({
+        title: "An error occurred",
+        description: error.message || "Please try again",
+        variant: "destructive"
+      });
+    } finally {
+      setIsVerifyingOTP(false);
     }
   };
 
@@ -313,7 +371,8 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
 
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    cleanupAuthState();
+    await supabase.auth.signOut({ scope: 'global' });
     navigate('/');
   };
 
@@ -394,7 +453,7 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
             
             <TabsContent value="signup">
               {!showOTPStep ? (
-                <form onSubmit={handleSignUp} className="space-y-4">
+                <form onSubmit={handleSendOTP} className="space-y-4">
                   <div>
                     <Label htmlFor="signup-email">Admin Email</Label>
                     <Input
@@ -438,7 +497,7 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
                       OTP has been sent to sativinay21@gmail.com for: <strong>{pendingEmail}</strong>
                     </p>
                   </div>
-                  <form onSubmit={handleSignUp} className="space-y-4">
+                  <form onSubmit={handleVerifyOTPAndCreateAccount} className="space-y-4">
                     <div>
                       <Label htmlFor="otp-code">Enter OTP Code</Label>
                       <Input
