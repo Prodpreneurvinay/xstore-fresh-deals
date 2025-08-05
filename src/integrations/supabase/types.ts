@@ -257,6 +257,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      create_first_admin: {
+        Args: { target_email: string; target_user_id: string }
+        Returns: boolean
+      }
       get_nearby_shops_for_products: {
         Args: { user_city: string; product_ids: string[]; days_back?: number }
         Returns: {
