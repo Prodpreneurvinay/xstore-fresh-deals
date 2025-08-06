@@ -111,9 +111,55 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 // Provider component
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cart, dispatch] = useReducer(cartReducer, initialCartState, () => {
-    // Load cart from localStorage on initial render
-    const savedCart = localStorage.getItem('cart');
-    return savedCart ? JSON.parse(savedCart) : initialCartState;
+    // Load cart from localStorage on initial render with validation
+    try {
+      const savedCart = localStorage.getItem('cart');
+      if (savedCart) {
+        const parsedCart = JSON.parse(savedCart);
+        
+        // Validate cart structure
+        if (parsedCart && 
+            Array.isArray(parsedCart.items) && 
+            typeof parsedCart.total === 'number' && 
+            typeof parsedCart.itemCount === 'number') {
+          
+          // Validate each cart item
+          const validItems = parsedCart.items.filter((item: any) => {
+            return item && 
+                   item.product && 
+                   typeof item.product.id === 'string' &&
+                   typeof item.product.name === 'string' &&
+                   typeof item.product.sellingPrice === 'number' &&
+                   typeof item.quantity === 'number' &&
+                   item.quantity > 0;
+          });
+          
+          // If all items are valid, return the cart; otherwise recalculate
+          if (validItems.length === parsedCart.items.length) {
+            return parsedCart;
+          } else {
+            console.warn('Some cart items were invalid and removed');
+            // Recalculate cart with valid items
+            const total = validItems.reduce((sum: number, item: any) => 
+              sum + (item.product.sellingPrice * item.quantity), 0);
+            const itemCount = validItems.reduce((count: number, item: any) => 
+              count + item.quantity, 0);
+            
+            return {
+              items: validItems,
+              total,
+              itemCount
+            };
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading cart from localStorage:', error);
+      // Clear corrupted cart data
+      localStorage.removeItem('cart');
+    }
+    
+    return initialCartState;
   });
   
   const { toast } = useToast();

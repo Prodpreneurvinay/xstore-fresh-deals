@@ -136,8 +136,29 @@ export const createOrder = async (orderData: {
 
   } catch (error: any) {
     console.error("Error in createOrder:", error);
+    console.error("Error details:", {
+      message: error?.message,
+      code: error?.code,
+      details: error?.details,
+      hint: error?.hint,
+      stack: error?.stack
+    });
     
-    const errorMessage = error?.message || "Unknown error occurred";
+    let errorMessage = "An unexpected error occurred while placing your order.";
+    
+    if (error?.message) {
+      if (error.message.includes("Invalid product data")) {
+        errorMessage = "Some items in your cart have invalid data. Please refresh the page and try again.";
+      } else if (error.message.includes("Invalid quantity")) {
+        errorMessage = "Some items in your cart have invalid quantities. Please check your cart and try again.";
+      } else if (error.message.includes("Missing required order information")) {
+        errorMessage = "Please fill in all required fields.";
+      } else if (error.message.includes("No items in order")) {
+        errorMessage = "Your cart is empty. Please add items before placing an order.";
+      } else {
+        errorMessage = error.message;
+      }
+    }
     
     toast({
       title: "Order failed",
