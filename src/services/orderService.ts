@@ -44,6 +44,7 @@ export const createOrder = async (orderData: {
 }): Promise<Order | null> => {
   try {
     console.log("Starting order creation with data:", orderData);
+    console.log("Cart items:", orderData.items);
 
     // Validate required fields
     if (!orderData.shop_name || !orderData.phone_number || !orderData.address || !orderData.city) {
@@ -52,6 +53,18 @@ export const createOrder = async (orderData: {
 
     if (!orderData.items || orderData.items.length === 0) {
       throw new Error("No items in order");
+    }
+
+    // Validate each item has required properties
+    for (const item of orderData.items) {
+      if (!item.product || !item.product.id || !item.product.name || typeof item.product.sellingPrice !== 'number') {
+        console.error("Invalid item data:", item);
+        throw new Error("Invalid product data in cart items");
+      }
+      if (!item.quantity || item.quantity <= 0) {
+        console.error("Invalid quantity for item:", item);
+        throw new Error("Invalid quantity in cart items");
+      }
     }
 
     // Insert the order first
@@ -85,15 +98,19 @@ export const createOrder = async (orderData: {
     console.log("Order created successfully:", order);
 
     // Insert order items
-    const orderItems = orderData.items.map(item => ({
-      order_id: order.id,
-      product_id: item.product.id,
-      quantity: Number(item.quantity),
-      price: Number(item.product.sellingPrice),
-      product_name: item.product.name,
-      product_image: item.product.imageUrl || "",
-      product_category: item.product.category || ""
-    }));
+    const orderItems = orderData.items.map(item => {
+      const orderItem = {
+        order_id: order.id,
+        product_id: item.product.id,
+        quantity: Number(item.quantity),
+        price: Number(item.product.sellingPrice),
+        product_name: item.product.name,
+        product_image: item.product.imageUrl || "",
+        product_category: item.product.category || ""
+      };
+      console.log("Mapping order item:", orderItem);
+      return orderItem;
+    });
 
     console.log("Inserting order items:", orderItems);
 
