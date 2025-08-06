@@ -32,7 +32,7 @@ export interface OrderItem {
   };
 }
 
-// Create a new order - simplified version
+// Create a new order - completely rewritten for reliability
 export const createOrder = async (orderData: {
   shop_name: string;
   phone_number: string;
@@ -42,44 +42,75 @@ export const createOrder = async (orderData: {
   total: number;
   items: CartItem[];
 }): Promise<Order | null> => {
+  console.log("🔄 Starting order creation...");
+  console.log("📦 Order data:", orderData);
+  console.log("🛒 Cart items:", orderData.items);
+
   try {
-    console.log("Starting order creation with data:", orderData);
-    console.log("Cart items:", orderData.items);
-
-    // Validate required fields
-    if (!orderData.shop_name || !orderData.phone_number || !orderData.address || !orderData.city) {
-      throw new Error("Missing required order information");
+    // Comprehensive validation
+    console.log("✅ Step 1: Validating order data...");
+    
+    if (!orderData.shop_name?.trim()) {
+      throw new Error("Shop name is required");
+    }
+    if (!orderData.phone_number?.trim()) {
+      throw new Error("Phone number is required");
+    }
+    if (!orderData.address?.trim()) {
+      throw new Error("Address is required");
+    }
+    if (!orderData.city?.trim()) {
+      throw new Error("City is required");
+    }
+    if (!orderData.items || !Array.isArray(orderData.items) || orderData.items.length === 0) {
+      throw new Error("Cart is empty - no items to order");
+    }
+    if (typeof orderData.total !== 'number' || orderData.total <= 0) {
+      throw new Error("Invalid order total");
     }
 
-    if (!orderData.items || orderData.items.length === 0) {
-      throw new Error("No items in order");
-    }
-
-    // Validate each item has required properties
-    for (const item of orderData.items) {
-      if (!item.product || !item.product.id || !item.product.name || typeof item.product.sellingPrice !== 'number') {
-        console.error("Invalid item data:", item);
-        throw new Error("Invalid product data in cart items");
+    // Validate each cart item
+    console.log("✅ Step 2: Validating cart items...");
+    for (let i = 0; i < orderData.items.length; i++) {
+      const item = orderData.items[i];
+      console.log(`📋 Validating item ${i + 1}:`, item);
+      
+      if (!item || typeof item !== 'object') {
+        throw new Error(`Cart item ${i + 1} is invalid`);
       }
-      if (!item.quantity || item.quantity <= 0) {
-        console.error("Invalid quantity for item:", item);
-        throw new Error("Invalid quantity in cart items");
+      if (!item.product || typeof item.product !== 'object') {
+        throw new Error(`Product data missing for cart item ${i + 1}`);
+      }
+      if (!item.product.id) {
+        throw new Error(`Product ID missing for cart item ${i + 1}`);
+      }
+      if (!item.product.name) {
+        throw new Error(`Product name missing for cart item ${i + 1}`);
+      }
+      if (typeof item.product.sellingPrice !== 'number' || item.product.sellingPrice <= 0) {
+        throw new Error(`Invalid selling price for ${item.product.name}`);
+      }
+      if (!item.quantity || typeof item.quantity !== 'number' || item.quantity <= 0) {
+        throw new Error(`Invalid quantity for ${item.product.name}`);
       }
     }
 
-    // Insert the order first
+    console.log("✅ Step 3: Creating order record...");
+    
+    // Prepare order data for database
     const orderInsert = {
-      shop_name: orderData.shop_name,
-      phone_number: orderData.phone_number,
-      address: orderData.address,
-      landmark: orderData.landmark || "",
-      city: orderData.city,
+      shop_name: orderData.shop_name.trim(),
+      phone_number: orderData.phone_number.trim(),
+      address: orderData.address.trim(),
+      landmark: orderData.landmark?.trim() || null,
+      city: orderData.city.trim(),
       total: Number(orderData.total),
       status: 'pending'
     };
 
-    console.log("Inserting order:", orderInsert);
+    console.log("📝 Inserting order:", orderInsert);
 
+    // Insert the order
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert(orderInsert)
@@ -87,56 +118,67 @@ export const createOrder = async (orderData: {
       .single();
 
     if (orderError) {
-      console.error("Order creation error:", orderError);
-      throw orderError;
+      console.error("❌ Order creation failed:", orderError);
+      throw new Error(`Failed to create order: ${orderError.message}`);
     }
 
     if (!order) {
-      throw new Error("No order returned from database");
+      throw new Error("No order data returned from database");
     }
 
-    console.log("Order created successfully:", order);
+    console.log("✅ Order created successfully:", order);
+    console.log("✅ Step 4: Creating order items...");
 
-    // Insert order items
-    const orderItems = orderData.items.map(item => {
+    // Prepare order items for database
+    const orderItems = orderData.items.map((item, index) => {
       const orderItem = {
         order_id: order.id,
         product_id: item.product.id,
         quantity: Number(item.quantity),
         price: Number(item.product.sellingPrice),
         product_name: item.product.name,
-        product_image: item.product.imageUrl || "",
-        product_category: item.product.category || ""
+        product_image: item.product.imageUrl || null,
+        product_category: item.product.category || null
       };
-      console.log("Mapping order item:", orderItem);
+      console.log(`📦 Order item ${index + 1}:`, orderItem);
       return orderItem;
     });
 
-    console.log("Inserting order items:", orderItems);
+    console.log("📝 Inserting order items:", orderItems);
 
+    // Insert order items
     const { error: itemsError } = await supabase
       .from('order_items')
       .insert(orderItems);
 
     if (itemsError) {
-      console.error("Order items creation error:", itemsError);
-      // Try to delete the order if items failed
-      await supabase.from('orders').delete().eq('id', order.id);
-      throw itemsError;
+      console.error("❌ Order items creation failed:", itemsError);
+      
+      // Rollback: delete the order if items failed to insert
+      console.log("🔄 Rolling back order creation...");
+      try {
+        await supabase.from('orders').delete().eq('id', order.id);
+        console.log("✅ Order rollback successful");
+      } catch (rollbackError) {
+        console.error("❌ Order rollback failed:", rollbackError);
+      }
+      
+      throw new Error(`Failed to create order items: ${itemsError.message}`);
     }
 
-    console.log("Order and items created successfully");
+    console.log("🎉 Order and items created successfully!");
 
+    // Success toast
     toast({
-      title: "Order placed successfully",
-      description: "Your order has been received and will be processed soon.",
+      title: "Order placed successfully! 🎉",
+      description: `Your order #${order.id.slice(0, 8)} has been received and will be processed soon.`,
     });
 
     return order;
 
   } catch (error: any) {
-    console.error("Error in createOrder:", error);
-    console.error("Error details:", {
+    console.error("💥 Order creation error:", error);
+    console.error("📊 Error details:", {
       message: error?.message,
       code: error?.code,
       details: error?.details,
@@ -144,25 +186,27 @@ export const createOrder = async (orderData: {
       stack: error?.stack
     });
     
-    let errorMessage = "An unexpected error occurred while placing your order.";
+    // Determine user-friendly error message
+    let userMessage = "An unexpected error occurred while placing your order.";
     
     if (error?.message) {
-      if (error.message.includes("Invalid product data")) {
-        errorMessage = "Some items in your cart have invalid data. Please refresh the page and try again.";
-      } else if (error.message.includes("Invalid quantity")) {
-        errorMessage = "Some items in your cart have invalid quantities. Please check your cart and try again.";
-      } else if (error.message.includes("Missing required order information")) {
-        errorMessage = "Please fill in all required fields.";
-      } else if (error.message.includes("No items in order")) {
-        errorMessage = "Your cart is empty. Please add items before placing an order.";
+      if (error.message.includes("Cart is empty")) {
+        userMessage = "Your cart is empty. Please add items before placing an order.";
+      } else if (error.message.includes("required")) {
+        userMessage = "Please fill in all required fields.";
+      } else if (error.message.includes("Invalid")) {
+        userMessage = "Some cart data is invalid. Please refresh the page and try again.";
+      } else if (error.message.includes("Failed to create")) {
+        userMessage = "Failed to save order to database. Please check your connection and try again.";
       } else {
-        errorMessage = error.message;
+        userMessage = error.message;
       }
     }
     
+    // Error toast
     toast({
-      title: "Order failed",
-      description: errorMessage,
+      title: "Order failed ❌",
+      description: userMessage,
       variant: "destructive"
     });
     
