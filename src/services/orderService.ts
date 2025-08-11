@@ -97,8 +97,10 @@ export const createOrder = async (orderData: {
 
     console.log("✅ Step 3: Creating order record...");
     
-    // Prepare order data for database
+    // Prepare order data for database (client-generated id to avoid SELECT RLS)
+    const orderId = crypto.randomUUID();
     const orderInsert = {
+      id: orderId,
       shop_name: orderData.shop_name.trim(),
       phone_number: orderData.phone_number.trim(),
       address: orderData.address.trim(),
@@ -107,32 +109,25 @@ export const createOrder = async (orderData: {
       total: Number(orderData.total),
       status: 'pending'
     };
-
     console.log("📝 Inserting order:", orderInsert);
 
-    // Insert the order
-    const { data: order, error: orderError } = await supabase
+    // Insert the order (no select to bypass SELECT RLS)
+    const { error: orderError } = await supabase
       .from('orders')
-      .insert(orderInsert)
-      .select()
-      .single();
+      .insert(orderInsert);
 
     if (orderError) {
       console.error("❌ Order creation failed:", orderError);
       throw new Error(`Failed to create order: ${orderError.message}`);
     }
 
-    if (!order) {
-      throw new Error("No order data returned from database");
-    }
-
-    console.log("✅ Order created successfully:", order);
+    console.log("✅ Order created successfully with id:", orderId);
     console.log("✅ Step 4: Creating order items...");
 
     // Prepare order items for database
     const orderItems = orderData.items.map((item, index) => {
       const orderItem = {
-        order_id: order.id,
+        order_id: orderId,
         product_id: item.product.id,
         quantity: Number(item.quantity),
         price: Number(item.product.sellingPrice),
@@ -157,7 +152,7 @@ export const createOrder = async (orderData: {
       // Rollback: delete the order if items failed to insert
       console.log("🔄 Rolling back order creation...");
       try {
-        await supabase.from('orders').delete().eq('id', order.id);
+        await supabase.from('orders').delete().eq('id', orderId);
         console.log("✅ Order rollback successful");
       } catch (rollbackError) {
         console.error("❌ Order rollback failed:", rollbackError);
@@ -171,10 +166,25 @@ export const createOrder = async (orderData: {
     // Success toast
     toast({
       title: "Order placed successfully! 🎉",
-      description: `Your order #${order.id.slice(0, 8)} has been received and will be processed soon.`,
+      description: `Your order #${orderId.slice(0, 8)} has been received and will be processed soon.`,
     });
 
-    return order;
+    // Build minimal order object to return (since SELECT is restricted by RLS)
+    const minimalOrder: Order = {
+      id: orderId,
+      shop_name: orderInsert.shop_name,
+      phone_number: orderInsert.phone_number,
+      address: orderInsert.address,
+      landmark: orderInsert.landmark || undefined,
+      city: orderInsert.city,
+      total: orderInsert.total,
+      status: 'pending',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      items: undefined,
+    } as Order;
+
+    return minimalOrder;
 
   } catch (error: any) {
     console.error("💥 Order creation error:", error);
